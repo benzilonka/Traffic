@@ -15,6 +15,7 @@ def fix_file(data,info):
         Knowledge_Base.store(ans)
     return ans
 
+
 def strip_json(json_file):
     data = []
     jsFile = json.loads(json_file)
