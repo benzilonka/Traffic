@@ -12,12 +12,14 @@ def add_car(ans):
     pass
 
 
-def get_frame(current_frame, light, traffic_density):
+def get_frame(current_frame, lane, light, traffic_density):
     # x = (pow(traffic_density, 3) * pow(e, (-1 * traffic_density)))/6
     x = random.uniform(0, 1)
-    ans  = {'frame_index': 7765, 'objects': []}
+    frame_index = current_frame['frame_index']
+    frame_index += 1
+    ans = {'frame_index': frame_index, 'objects': []}
     if x >= traffic_density:
         ans = add_car(ans)
     print(x)
-    return 0
+    return ans
 get_frame(0, 0, 1)
