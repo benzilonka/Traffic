@@ -26,14 +26,11 @@ import Parser
 def read_meta_file():
     file = open("C:\\Users\\Avner\\PycharmProjects\\traffic data\\examples\\big_28.12.2017-04_55_56.meta", 'r')
     info_file = open("C:\\Users\\Avner\\PycharmProjects\\traffic data\\examples\\big_28.12.2017-04_55_56.json", 'r')
-    return Parser.fix_file(file.read(), "C:\\Users\\Avner\\PycharmProjects\\traffic data\\examples\\big_28.12.2017-04_55_56.json")
-
-    file = open("D:\\Idan\\Traffic-examples\\big_28.12.2017-04_55_56.meta", 'r')
-    return server.Parser.fix_file(file.read())
+    return Parser.fix_file(file.read(), json.loads(info_file.read()))
 
 
 
-#read_meta_file()
+print (read_meta_file())
 
 
 
