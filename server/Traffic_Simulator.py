@@ -8,15 +8,16 @@ e = 2.71828182846
 def get_first_frame():
     return {'frame_index': 0, 'objects': []}
 
-def deleteCars(frame, lane):
+def deleteCars(frame, lanes):
     vehicleList = frame['objects']
     index = 0
     while index < len(vehicleList):
         currentBBox = vehicleList[index]['bounding_box']
         # yPosition = BBox[1], lane[3]/lane[4] are locations of the end of the lane
         # Delete locations of vehicles that passed the location of the end of the lane
-        if currentBBox[1] < lane[3][1]:
-            del(vehicleList[index])
+        for lane in lanes:
+            if currentBBox[1] < lane[3][1]:
+               del(vehicleList[index])
         index += 1
     return frame
 
@@ -50,15 +51,12 @@ def stopping_distences(x):
          - (0.000726897*pow(x, 5))+(0.0373303*pow(x, 4))
          - (1.26654*pow(x, 3)) + (27.081*x*x) - (327.869*x) + 1703.8)
 
-def get_frame(current_frame, lane, light, traffic_density):
-    #x = (pow(traffic_density, 3) * pow(e, (-1 * traffic_density)))/6
-
 def genBoundingBox(laneLocations):
     # X location will be in the middle of the lane
     xPoint = int((laneLocations[0][0] + laneLocations[1][0]) / 2)
     # Y location will be where the lane begin
     yPoint = laneLocations[0][1]
-    bbox = [xPoint, yPoint, 0, 0]
+    bbox = [xPoint, yPoint]
     return bbox
 
 def genNewSpeed(typeOfVehicle):
@@ -96,7 +94,7 @@ def extractVehiclesPerLane(frame, lanesLst):
             bbox = vehicle['bounding_box']
             # Check if vehicle is in the range of the x and y coordinates of current lane
             # lane[0][0]- x in start location , lane[3][0]- x in end location
-            # lane[0][1]- y in start location , lane[3][1]- y in end location
+            # lane[0][1]- y in end location , lane[3][1]- y in start location
             if lane[0][0] <= bbox[0] <= lane[3][0] and lane[3][1] <= bbox[1] <= lane[0][1]:
                 element['objects'].append(vehicle)
         #sort vehicles by their y loactions
@@ -110,49 +108,48 @@ def helpSorted(vehicle):
     return vehicle['bounding_box'][1]
 
 def get_frame(current_frame, lanesList, light, traffic_density):
-    # x = (pow(traffic_density, 3) * pow(e, (-1 * traffic_density)))/6
     x = random.uniform(0, 1)
     frame_index = current_frame['frame_index']
     frame_index += 1
-    ans = {'frame_index': frame_index, 'objects': []}
+    current_frame['frame_index'] += 1
+    ans = current_frame
     if x >= traffic_density:
-        ans = add_car(ans, lane[int(random.uniform(0,len(lane)))])
-    cars_in_lanes = get_cars()
+        ans = add_car(current_frame, lanesList[int(random.uniform(0, len(lanesList)))])
+    cars_in_lanes = extractVehiclesPerLane(ans, lanesList)
     for cars_in_lane in cars_in_lanes:
+        cars_in_lane = cars_in_lane['objects']
         for i in range(0, len(cars_in_lane)):
-            if i == 0:
-                if light == "green":
-                    cars_in_lane[i]['speed'] += random.uniform(-4.5, 4.5)*((34 - cars_in_lane[i]['speed']) / 34)
-                elif light == "orange":
-                      dis = cars_in_lane[i + 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
-                      dis *= 5  # the ratio between real distance and pixels on the screen
-                      if cars_in_lane[i]['speed']*3 < dis:
-                          cars_in_lane[i]['speed'] += random.uniform(-4.5, 4.5) * ((34 - cars_in_lane[i]['speed']) / 34)
-                      else:
-                          cars_in_lane[i]['speed'] += random.uniform(-4.5, 0) * ((34 - cars_in_lane[i]['speed']) / 34)
-                else:
-                    dis = cars_in_lane[i + 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
-                    dis *= 5  # the ratio between real distance and pixels on the screen
-                    sd = stopping_distences(cars_in_lane[i]['speed'] * 3.6)
-                    if dis < sd:
-                        cars_in_lane[i]['speed'] += random.uniform(-4.5, -1)
+            if cars_in_lane[i]['speed'] > 0:
+                if i == 0:
+                    if light == "green":
+                        cars_in_lane[i]['speed'] += random.uniform(-4.5, 4.5)*((34 - cars_in_lane[i]['speed']) / 34)
+                    elif light == "orange":
+                          dis = cars_in_lane[i + 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
+                          dis *= 5  # the ratio between real distance and pixels on the screen
+                          if cars_in_lane[i]['speed']*3 < dis:
+                              cars_in_lane[i]['speed'] += random.uniform(-4.5, 4.5) * ((34 - cars_in_lane[i]['speed']) / 34)
+                          else:
+                              cars_in_lane[i]['speed'] += random.uniform(-4.5, 0) * ((34 - cars_in_lane[i]['speed']) / 34)
                     else:
-                        cars_in_lane[i]['speed'] += random.uniform(-4.5, 0)
-            else:
-                dis = cars_in_lane[i + 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
-                dis *= 5  # the ratio between real distance and pixels on the screen
-                ttc = dis / cars_in_lane[i]['speed']
-                if ttc > 2:
-                    cars_in_lane[i]['speed'] += random.uniform(-2, 4.5) * ((34 - cars_in_lane[i]['speed']) / 34)
-                elif 1 < ttc < 2:
-                    cars_in_lane[i]['speed'] += random.uniform(-2.5, 2.5) * ((34 - cars_in_lane[i]['speed']) / 34)
+                        dis = cars_in_lane[i - 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
+                        dis *= 5  # the ratio between real distance and pixels on the screen
+                        sd = stopping_distences(cars_in_lane[i]['speed'] * 3.6)
+                        if dis < sd:
+                            cars_in_lane[i]['speed'] += random.uniform(-4.5, -1)
+                        else:
+                            cars_in_lane[i]['speed'] += random.uniform(-4.5, 0)
                 else:
-                    cars_in_lane[i]['speed'] += random.uniform(-4.5, -1)
-             # else:
-	print(stopping_distences(120))
-
+                    dis = cars_in_lane[i - 1]['bounding_box'][1] - cars_in_lane[i]['bounding_box'][1]
+                    dis *= 5  # the ratio between real distance and pixels on the screen
+                    ttc = dis / cars_in_lane[i]['speed']
+                    if ttc > 2:
+                        cars_in_lane[i]['speed'] += random.uniform(-2, 4.5) * ((34 - cars_in_lane[i]['speed']) / 34)
+                    elif 1 < ttc < 2:
+                        cars_in_lane[i]['speed'] += random.uniform(-2.5, 2.5) * ((34 - cars_in_lane[i]['speed']) / 34)
+                    else:
+                        cars_in_lane[i]['speed'] += random.uniform(-4.5, -1)
+            else : cars_in_lane[i]['speed'] = 0
     ans = deleteCars(ans, lanesList)
-    vehiclesInLanesArr = extractVehiclesPerLane(ans, lanesList)
     return ans
 
 
@@ -182,6 +179,13 @@ lanesArray = [[[500,250], [600,250], [500,10], [600,10]], \
               [[356, 250], [499, 250], [356, 5], [499, 5]], \
               [[200, 100], [350, 100], [200, 0], [350, 0]], \
               [[100, 200], [199, 200], [100, 100], [199, 100]]]
-
-get_frame({'frame_index': 0, 'objects': []}, lanesArray, 0, 0)
+ans =[]
+x = get_frame({'frame_index': 0, 'objects': []}, lanesArray, "green", 0.5)
+for i in range(0, 60):
+    ans.append(x['objects'])
+    x = get_frame(x, lanesArray, "green", 0.5)
+print(ans)
+with open("data.meta", 'w') as file:
+    for line in ans:
+        file.write(str({'objects': line})+'\n')
 #extractVehiclesPerLane(frame, lanesArray)
