@@ -1,6 +1,5 @@
 import json
 
-
 def get_array(param):
     ans = [[], []]
     for i in range(0, len(param[1])):
@@ -37,33 +36,37 @@ def clean_routs_jsons(hash_vehicles, jsons):
 
 
 def clean(data):
-	jsons = data.replace("'", '"').replace("False", "false").replace("True", "true").split("\n")
-	ans = []
-	hash_vehicles = {}
+    jsons = data.replace("'", '"').replace("False", "false").replace("True", "true").split("\n")
+    ans = []
+    hash_vehicles = {}
+    vehiclesSpeed = {}
     # Extract path for each vehicle by collecting location per frame from the current JSON file
-	for frame in jsons:
-		try:
-			json_frame = json.loads(frame)
-		except ValueError:  # includes simplejson.decoder.JSONDecodeError
-			pass
-		objects = json_frame['objects']
-		# Extract location of each vehicle in the current frame
-		for i in range(0, len(objects)):
-			vehicle = objects[i]
-			vehicle_id = int(vehicle['tracking_id'])
-			coordinates = [[], []]
-			if not hash_vehicles.__contains__(vehicle_id):
-				hash_vehicles[vehicle_id] = list()
-			coordinates[0] = vehicle['bounding_box'][0]
-			coordinates[1] = vehicle['bounding_box'][1]
-			hash_vehicles[vehicle_id].append(coordinates)
+    for frame in jsons:
+        try:
+            json_frame = json.loads(frame)
+        except ValueError:  # includes simplejson.decoder.JSONDecodeError
+            pass
+        objects = json_frame['objects']
+        # Extract location and speed of each vehicle in the current frame
+        for i in range(0, len(objects)):
+            vehicle = objects[i]
+            vehicle_id = int(vehicle['tracking_id'])
+            coordinates = [[], []]
+            if not hash_vehicles.__contains__(vehicle_id):
+                hash_vehicles[vehicle_id] = list()
+            if not vehiclesSpeed.__contains__(vehicle_id):
+                vehiclesSpeed[vehicle_id] = list()
+            coordinates[0] = vehicle['bounding_box'][0]
+            coordinates[1] = vehicle['bounding_box'][1]
+            hash_vehicles[vehicle_id].append(coordinates)
+            vehiclesSpeed[vehicle_id].append(vehicle['speed'])
 
-	#hash_vehicles = clean_routs(hash_vehicles)
-	normalizeData(hash_vehicles)
-	updateJson(jsons, hash_vehicles)
-	return jsons
+    #hash_vehicles = clean_routs(hash_vehicles)
+    normalizeData(hash_vehicles, vehiclesSpeed)
+    updateJson(jsons, hash_vehicles, vehiclesSpeed)
+    return jsons
 
-def updateJson(jsonFile, vehiclesPath):
+def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
     # Pass through all the frames in order to update them
     for frame in jsonFile:
         try:
@@ -71,16 +74,20 @@ def updateJson(jsonFile, vehiclesPath):
         except ValueError:  # includes simplejson.decoder.JSONDecodeError
             pass
         objects = jsonFrame['objects']
-        # Update location of each vehicle in the current frame
+        # Update location and speed of each vehicle in the current frame
         for i in range(0, len(objects)):
             vehicle = objects[i]
             vehicle_id = int(vehicle['tracking_id'])
             currentVehiclePath = vehiclesPath[vehicle_id]
+            currentVehicleSpeeds = vehiclesSpeed[vehicle_id]
             modifiedLocation = currentVehiclePath.pop(0)
+            modifiedSpeed = currentVehicleSpeeds.pop(0)
             vehicle['bounding_box'][0] = modifiedLocation[0]
             vehicle['bounding_box'][1] = modifiedLocation[1]
+            vehicle['speed'] = modifiedSpeed
 
-def normalizeData(vehiclesPath):
+def normalizeData(vehiclesPath, vehiclesSpeed):
+    # Fix and handle locations of vehicles from given data
     for path in vehiclesPath:
         start_location = vehiclesPath[path][0]
         end_location = vehiclesPath[path][len(vehiclesPath[path])-1]
@@ -98,6 +105,56 @@ def normalizeData(vehiclesPath):
         #   We'll check(and fix if needed) that the vehicle movement is linear. Which means that if in x/y axis we start
         #   in high number and end in lower number, the numbers should be going down all the way or vice versa.
         linearMovement(start_location, vehiclesPath[path])
+
+    # Fix and handle speeds of vehicles from given data
+    for vehicle in vehiclesSpeed:
+        # Third Stage:
+        #   We'll fix logically impossible high sampled speeds.
+        index = 0
+        for speed in vehiclesSpeed[vehicle]:
+            normalizedSpeed = checkForLegalSpeedAndFit(speed)
+            vehiclesSpeed[vehicle][index] = normalizedSpeed
+            index += 1
+
+        # Fourth Stage:
+        #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
+        checkForLegalDifferSpeed(vehiclesSpeed[vehicle])
+
+
+def checkForLegalDifferSpeed(vehicleSpeedList):
+    # Speeds in m/millisecond
+    minSpeed = 0.0
+    # 120 km/h -> 33.33333333333333 m/s ->  0.03333333333333 m/millisecond
+    maxSpeed = (120.0/3.6) / 1000
+    # Calculation is delta(velocity)/delta(time),
+    # where delta(velocity) = maxSpeed-minSpeed and
+    # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
+    deltaVel = maxSpeed - minSpeed
+    deltaTime = 66.66666666666667
+    maxAccelration = deltaVel/deltaTime
+    index = 0
+    while index < len(vehicleSpeedList)-1:
+        if vehicleSpeedList[index] < vehicleSpeedList[index+1]:
+            # if u + a*t < v (where u is velocity we begin with and t is the time passed till now)
+            if vehicleSpeedList[index] + maxAccelration*deltaTime < vehicleSpeedList[index+1]:
+                # Anomaly in speed and we'll fix it
+                vehicleSpeedList[index+1] = vehicleSpeedList[index] + maxAccelration*deltaTime
+            # else speed is OK
+        else: # current speed is bigger than next speed
+            # if u + a*t > v (where u is velocity we begin with and t is the time passed till now)
+            if vehicleSpeedList[index] - maxAccelration*deltaTime > vehicleSpeedList[index+1]:
+                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration*deltaTime
+            # else speed is OK
+        index += 1
+
+def checkForLegalSpeedAndFit(currentSpeed):
+    # max speed is in km/h
+    maxSpeed = 120.0
+    # max legal speed is in m/s
+    maxLegalSpeedPerSec = maxSpeed/3.6
+    if currentSpeed > maxLegalSpeedPerSec:
+        currentSpeed = maxLegalSpeedPerSec
+    return currentSpeed
 
 def checkInRangeAndFit(start, end, currentLocation):
     # check x/y axis
@@ -122,7 +179,7 @@ def linearMovement(start, path):
     directionX = checkForDirection(start, path[index], 0)
     directionY = checkForDirection(start, path[index], 1)
     while index < len(path):
-        # if not the last location in path (maybe redundant)
+        # if not the last location in path
         if index != len(path) - 1:
             if directionX == "unknown":
                 directionX = checkForDirection(path[index], path[index+1], 0)
