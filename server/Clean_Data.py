@@ -1,5 +1,4 @@
 import json
-import math
 
 def get_array(param):
     ans = [[], []]
@@ -118,37 +117,39 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
             index += 1
 
         # Fourth Stage:
-        #   We'll check(and fix) that the difference in speed between two consecutive frames is logical
+        #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
         checkForLegalDifferSpeed(vehiclesSpeed[vehicle])
 
 
 def checkForLegalDifferSpeed(vehicleSpeedList):
     # Speeds in m/millisecond
     minSpeed = 0.0
-    # 50 km/h -> 13.88888888888889 m/s -> 0.013888888888889 m/millisecond
-    maxSpeed = (50.0/3.6) / 1000
+    # 120 km/h -> 33.33333333333333 m/s ->  0.03333333333333 m/millisecond
+    maxSpeed = (120.0/3.6) / 1000
     # Calculation is delta(velocity)/delta(time),
     # where delta(velocity) = maxSpeed-minSpeed and
-    # delta(time) = 1/25 second = 40 milliseconds (according to 25 fps)
+    # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
     deltaVel = maxSpeed - minSpeed
-    deltaTime = 40
+    deltaTime = 66.66666666666667
     maxAccelration = deltaVel/deltaTime
     index = 0
-    while index < len(vehicleSpeedList):
+    while index < len(vehicleSpeedList)-1:
         if vehicleSpeedList[index] < vehicleSpeedList[index+1]:
-            if vehicleSpeedList[index] + maxAccelration < vehicleSpeedList[index+1]:
+            # if u + a*t < v (where u is velocity we begin with and t is the time passed till now)
+            if vehicleSpeedList[index] + maxAccelration*deltaTime < vehicleSpeedList[index+1]:
                 # Anomaly in speed and we'll fix it
-                vehicleSpeedList[index+1] = vehicleSpeedList[index] + maxAccelration
+                vehicleSpeedList[index+1] = vehicleSpeedList[index] + maxAccelration*deltaTime
             # else speed is OK
         else: # current speed is bigger than next speed
-            if vehicleSpeedList[index] - maxAccelration > vehicleSpeedList[index+1]:
-                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration
+            # if u + a*t > v (where u is velocity we begin with and t is the time passed till now)
+            if vehicleSpeedList[index] - maxAccelration*deltaTime > vehicleSpeedList[index+1]:
+                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration*deltaTime
             # else speed is OK
         index += 1
 
 def checkForLegalSpeedAndFit(currentSpeed):
     # max speed is in km/h
-    maxSpeed = 50.0
+    maxSpeed = 120.0
     # max legal speed is in m/s
     maxLegalSpeedPerSec = maxSpeed/3.6
     if currentSpeed > maxLegalSpeedPerSec:
@@ -178,7 +179,7 @@ def linearMovement(start, path):
     directionX = checkForDirection(start, path[index], 0)
     directionY = checkForDirection(start, path[index], 1)
     while index < len(path):
-        # if not the last location in path (maybe redundant)
+        # if not the last location in path
         if index != len(path) - 1:
             if directionX == "unknown":
                 directionX = checkForDirection(path[index], path[index+1], 0)
