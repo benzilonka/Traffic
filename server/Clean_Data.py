@@ -82,11 +82,13 @@ def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
             vehicle_id = int(vehicle['tracking_id'])
             currentVehiclePath = vehiclesPath[vehicle_id]
             currentVehicleSpeeds = vehiclesSpeed[vehicle_id]
-            modifiedLocation = currentVehiclePath.pop(0)
-            modifiedSpeed = currentVehicleSpeeds.pop(0)
-            vehicle['bounding_box'][0] = modifiedLocation[0]
-            vehicle['bounding_box'][1] = modifiedLocation[1]
-            vehicle['speed'] = modifiedSpeed
+            if currentVehiclePath != None:
+                modifiedLocation = currentVehiclePath.pop(0)
+                vehicle['bounding_box'][0] = modifiedLocation[0]
+                vehicle['bounding_box'][1] = modifiedLocation[1]
+            if currentVehicleSpeeds != None:
+                modifiedSpeed = currentVehicleSpeeds.pop(0)
+                vehicle['speed'] = modifiedSpeed
             vehicles.append(vehicle)
         jsonFrame['objects'] = vehicles
         json_to_ret.append(jsonFrame)
@@ -111,7 +113,7 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         # Second Stage:
         #   We'll check(and fix if needed) that the vehicle movement is linear. Which means that if in x/y axis we start
         #   in high number and end in lower number, the numbers should be going down all the way or vice versa.
-        linearMovement(start_location, vehiclesPath[path])
+        vehiclesPath[path] = linearMovement(start_location, vehiclesPath[path])
 
     # Fix and handle speeds of vehicles from given data
     for vehicle in vehiclesSpeed:
@@ -184,6 +186,8 @@ def checkInRangeAndFit(start, end, currentLocation):
 
 def linearMovement(start, path):
     index = 1
+    if len(path) < 2:
+        return
     # check if the movement is from higher to lower numbers or vice versa
     directionX = checkForDirection(start, path[index], 0)
     directionY = checkForDirection(start, path[index], 1)
@@ -205,6 +209,7 @@ def linearMovement(start, path):
                 index += 1
         else:
             index += 1
+    return path
 
 def checkForDirection(locFrom, locTo, xORy):
     direction = "unknown"
