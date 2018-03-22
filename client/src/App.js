@@ -9,8 +9,6 @@ import './styles/App.css';
 
 const FRAME_TIME = 0.066666666666;
 const SECOND = 1000;
-const MAP_HEIGHT = 500;
-const MAP_WIDTH = 500;
 
 class App extends Component {
   constructor(props) {

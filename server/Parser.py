@@ -46,8 +46,8 @@ def getVehicles(frame):
     for vehicle in frame['objects']:
         box = vehicle['bounding_box']
         if len(box) == 4:
-            x = box[0] + (box[2] / 2)
-            y = box[1] + (box[3] / 2)
+            x = box[0] + ((box[2] * 2) / 3)
+            y = box[1] + ((box[3] * 4) / 5)
         else:
             x = box[0]
             y = box[1]
