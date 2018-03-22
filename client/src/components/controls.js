@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, Row, Col } from 'reactstrap';
+import { Container, Row, Col, Button } from 'reactstrap';
 import { PlayButton, PauseButton, ProgressBar } from 'react-player-controls';
 import '../styles/Controls.css';
 import '../styles/video_controls.css';
@@ -46,6 +46,24 @@ class Controls extends Component {
                                 </Col>
                             </Row>
                         </Col>
+                    </Row>
+                </Container>
+                <Container>
+                    <Row>
+                        <Col xs={12}>
+                            <p></p>
+                        </Col>
+                    </Row>
+                </Container>
+                <Container>
+                    <Row>
+                        <Col xs={12}>
+                            <Button color="danger" onClick={(e) => this.props.toggleShowTTC()}>Toggle TTC</Button>
+                            &nbsp;
+                            <Button color="danger" onClick={(e) => this.props.toggleShowSpeed()}>Toggle Speed</Button>
+                            &nbsp;
+                            <Button color="danger" onClick={(e) => this.props.toggleShowDistance()}>Toggle Distance</Button>
+                        </Col>   
                     </Row>
                 </Container>
           </div>

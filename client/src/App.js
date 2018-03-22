@@ -25,8 +25,27 @@ class App extends Component {
       currentFrame: null,
       numOfFrames: 0,
       seeking: false,
-      loading: false
+      loading: false,
+      showSpeed: false,
+      showTTC: false,
+      showDistance: false
     }
+  }
+
+  toggleShowSpeed = () => {
+    this.setState({
+      showSpeed: !this.state.showSpeed
+    });
+  }
+  toggleShowTTC = () => {
+    this.setState({
+      showTTC: !this.state.showTTC
+    });
+  }
+  toggleShowDistance = () => {
+    this.setState({
+      showDistance: !this.state.showDistance
+    });
   }
 
   playPause = () => {
@@ -125,6 +144,9 @@ class App extends Component {
           type: car.type,
           direction: direction,
           tracking_id: car.tracking_id,
+          speed: car.speed,
+          ttc: car.ttc,
+          distance: car.distance,
           key: i
         });
         i++;
@@ -153,7 +175,10 @@ class App extends Component {
                   played ={this.state.played}
                   playbackRate={this.state.playbackRate} 
                   setPlaybackRate={this.setPlaybackRate.bind(this)}
-                  loading={this.state.loading}>
+                  loading={this.state.loading}
+                  showSpeed={this.state.showSpeed}
+                  showTTC={this.state.showTTC}
+                  showDistance={this.state.showDistance}>
               </Map>
             </Col>
             <Col xs={5}>
@@ -181,7 +206,10 @@ class App extends Component {
                           setPlaybackRate={this.setPlaybackRate.bind(this)} 
                           onSeekMouseDown={this.onSeekMouseDown.bind(this)}
                           onSeekChange={this.onSeekChange.bind(this)}
-                          onSeekMouseUp={this.onSeekMouseUp.bind(this)}>
+                          onSeekMouseUp={this.onSeekMouseUp.bind(this)}
+                          toggleShowSpeed={this.toggleShowSpeed.bind(this)}
+                          toggleShowTTC={this.toggleShowTTC.bind(this)}
+                          toggleShowDistance={this.toggleShowDistance.bind(this)}>
                   </Controls>
                 </Col>
               </Row>

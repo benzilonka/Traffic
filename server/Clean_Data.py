@@ -62,12 +62,13 @@ def clean(data):
             vehiclesSpeed[vehicle_id].append(vehicle['speed'])
 
     #hash_vehicles = clean_routs(hash_vehicles)
-    normalizeData(hash_vehicles, vehiclesSpeed)
-    updateJson(jsons, hash_vehicles, vehiclesSpeed)
+    hash_vehicles, vehiclesSpeed = normalizeData(hash_vehicles, vehiclesSpeed)
+    jsons = updateJson(jsons, hash_vehicles, vehiclesSpeed)
     return jsons
 
 def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
     # Pass through all the frames in order to update them
+    json_to_ret = []
     for frame in jsonFile:
         try:
             jsonFrame = json.loads(frame)
@@ -75,6 +76,7 @@ def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
             pass
         objects = jsonFrame['objects']
         # Update location and speed of each vehicle in the current frame
+        vehicles = []
         for i in range(0, len(objects)):
             vehicle = objects[i]
             vehicle_id = int(vehicle['tracking_id'])
@@ -85,6 +87,11 @@ def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
             vehicle['bounding_box'][0] = modifiedLocation[0]
             vehicle['bounding_box'][1] = modifiedLocation[1]
             vehicle['speed'] = modifiedSpeed
+            vehicles.append(vehicle)
+        jsonFrame['objects'] = vehicles
+        json_to_ret.append(jsonFrame)
+
+    return json_to_ret
 
 def normalizeData(vehiclesPath, vehiclesSpeed):
     # Fix and handle locations of vehicles from given data
@@ -118,7 +125,8 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
 
         # Fourth Stage:
         #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
-        checkForLegalDifferSpeed(vehiclesSpeed[vehicle])
+        vehiclesSpeed[vehicle] = checkForLegalDifferSpeed(vehiclesSpeed[vehicle])
+    return vehiclesPath, vehiclesSpeed
 
 
 def checkForLegalDifferSpeed(vehicleSpeedList):
@@ -146,6 +154,7 @@ def checkForLegalDifferSpeed(vehicleSpeedList):
                 vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration*deltaTime
             # else speed is OK
         index += 1
+    return vehicleSpeedList
 
 def checkForLegalSpeedAndFit(currentSpeed):
     # max speed is in km/h

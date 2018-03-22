@@ -25,11 +25,8 @@
     background-color: #fff;
     z-index: 0;
 }
-.lanes-cont div {
-    z-index: 1;
-    overflow: hidden;
-}
-.lanes-cont div, .lanes-disp div {
+
+.lanes-cont .lane, .lanes-disp div {
     position: absolute;
 }
 
@@ -41,4 +38,13 @@
     top: 10px;
     left: 24px;
     background-color: rgba(0,0,0,0.1);
+}
+
+.vehicle {
+    overflow: visible;
+}
+
+.vehicle-label {
+    width: 320px;
+    overflow: visible;
 }
