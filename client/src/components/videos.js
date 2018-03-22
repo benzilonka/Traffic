@@ -130,11 +130,11 @@ class Videos extends Component {
           <ModalBody>
               <FormGroup className="inputRow">
                   <Label>Frames (.meta) #{index+1}</Label>
-                  <Input type="file" accept="*.meta" onChange={(event)=> { self.readMetaFile(index, event) }} />
+                  <Input type="file" accept=".meta" onChange={(event)=> { self.readMetaFile(index, event) }} />
               </FormGroup>
               <FormGroup className="inputRow">
                   <Label>Metadata (.json) #{index+1}</Label>
-                  <Input type="file" accept="*.json" onChange={(event)=> { self.readJsonFile(index, event) }} />
+                  <Input type="file" accept=".json" onChange={(event)=> { self.readJsonFile(index, event) }} />
               </FormGroup>
               <FormGroup className="inputRow">
                   <Label>Video #{index+1}</Label>

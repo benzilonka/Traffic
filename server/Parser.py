@@ -2,18 +2,25 @@ import json
 import Calibration
 import Clean_Data
 import Knowledge_Base
+import transform
 
 
 def fix_file(data,info):
     jsons = Clean_Data.clean(data)
-    ans = []
+    frames = []
+    fixed_frames = []
+    i = 0
     for frame in jsons:
         if frame:
             frame = strip_json(frame)
-            frame = Calibration.fix_frame(frame, info['tracking_params']['lanes'])
-            ans.append(frame)
-        Knowledge_Base.store(ans)
-    return ans
+            frames.append(frame)
+    
+    transformationMatrix = transform.getTransformation(info['tracking_params']['lanes'])
+    for frame in frames:
+        fixed_frame = transform.wrap(frame, transformationMatrix)
+        fixed_frames.append(fixed_frame)
+
+    return fixed_frames
 
 
 def strip_json(json_file):

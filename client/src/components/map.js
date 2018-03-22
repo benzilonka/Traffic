@@ -3,9 +3,9 @@ import Vehicle from './vehicle.js';
 import '../styles/Map.css';
 import loading_gif from '../images/loading.gif';
 
-const MAP_HEIGHT = 500;
-const MAP_WIDTH = 500;
-const LANE_WIDTH = 130;
+const MAP_HEIGHT = 735;
+const MAP_WIDTH = 735;
+const LANE_WIDTH = 70;
 const DIRECTIONS = {
   TOP_TO_DOWN: 0,
   RIGHT_TO_LEFT: 1,
@@ -28,45 +28,12 @@ class Map extends Component {
           if(directionFrames != null) {
             if(directionFrames[self.props.currentFrame] != null) {
               let _vehicles = directionFrames[self.props.currentFrame].map(function(vehicle) {
-                let x = vehicle.y;
-                let y = vehicle.x;
-                switch(vehicle.direction) {
-                  case DIRECTIONS.TOP_TO_DOWN:
-                    y = MAP_HEIGHT - y;
-                    if(y > MAP_HEIGHT / 2) {
-                      //return null;
-                    }
-                    break;
-                  case DIRECTIONS.RIGHT_TO_LEFT:
-                    x = x + y;
-                    y = x - y;
-                    x = x - y;
-                    if(x < MAP_HEIGHT / 2) {
-                      //return null;
-                    }
-                    break;
-                  case DIRECTIONS.DOWN_TO_UP:
-                    if(y < MAP_HEIGHT / 2) {
-                      //return null;
-                    }
-                    break;
-                  case DIRECTIONS.LEFT_TO_RIGHT:
-                    x = x + y;
-                    y = x - y;
-                    x = x - y;
-                    x = MAP_HEIGHT - x;
-                    if(x > MAP_HEIGHT / 2) {
-                      //return null;
-                    }
-                    break;
-                  default:
-                    break;
-                }
+                let x = vehicle.x;
+                let y = vehicle.y;
                 return (
                     <Vehicle key={vehicle.key} 
                              x={x}
                              y={y} 
-                             direction={vehicle.direction} 
                              type={vehicle.type}
                              >
                     </Vehicle>
@@ -87,25 +54,28 @@ class Map extends Component {
       top: 0,
       left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
       width: LANE_WIDTH,
-      height: MAP_HEIGHT / 2
+      height: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
     };
     let lane1Style = {
-      top: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
-      left: 0,
-      width: MAP_HEIGHT / 2,
-      height: LANE_WIDTH
+      top: MAP_HEIGHT / 4 + LANE_WIDTH / 4,
+      left: LANE_WIDTH * 2 - 10,
+      width: LANE_WIDTH,
+      height: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
+      transform: 'rotate(270deg)'
     };
     let lane2Style = {
-      top: MAP_HEIGHT / 2,
+      top: MAP_HEIGHT / 2 + LANE_WIDTH / 2,
       left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
       width: LANE_WIDTH,
-      height: MAP_HEIGHT / 2
+      height: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
+      transform: 'rotate(180deg)'
     };
     let lane3Style = {
-      top: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
-      left: MAP_HEIGHT / 2,
-      width: MAP_HEIGHT / 2,
-      height: LANE_WIDTH
+      top: MAP_HEIGHT / 4 + LANE_WIDTH / 4,
+      left: MAP_HEIGHT / 2 + LANE_WIDTH * 2.4,
+      width: LANE_WIDTH,
+      height: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
+      transform: 'rotate(90deg)'
     };
     let loading = '';
     let loadingStyle = {      
@@ -121,23 +91,29 @@ class Map extends Component {
     return (
       <div>
         <div className="Map" style={mapStyle}>
-          <div>
-            {vehicles[DIRECTIONS.TOP_TO_DOWN]}
+          <div className="lanes-cont">
+            <div style={lane0Style}>
+              {vehicles[DIRECTIONS.TOP_TO_DOWN]}
+            </div>
+            <div style={lane1Style}>
+              {vehicles[DIRECTIONS.RIGHT_TO_LEFT]}
+            </div>
+            <div style={lane2Style}>
+              {vehicles[DIRECTIONS.DOWN_TO_UP]}
+            </div>
+            <div style={lane3Style}>
+              {vehicles[DIRECTIONS.LEFT_TO_RIGHT]}
+            </div>
           </div>
-          <div>
-            {vehicles[DIRECTIONS.RIGHT_TO_LEFT]}
-          </div>
-          <div>
-            {vehicles[DIRECTIONS.DOWN_TO_UP]}
-          </div>
-          <div>
-            {vehicles[DIRECTIONS.LEFT_TO_RIGHT]}
-          </div>
-          <div className="lanes">
-            <div id="lane0" style={lane0Style}></div>
-            <div id="lane1" style={lane1Style}></div>
-            <div id="lane2" style={lane2Style}></div>
-            <div id="lane3" style={lane3Style}></div>
+          <div className="lanes-disp">
+            <div style={lane0Style}>
+            </div>
+            <div style={lane1Style}>
+            </div>
+            <div style={lane2Style}>
+            </div>
+            <div style={lane3Style}>
+            </div>
           </div>
         </div>
         {loading}

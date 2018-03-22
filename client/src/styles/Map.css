@@ -21,10 +21,16 @@
     z-index: 1;
 }
 
-.lanes div {
+.lanes-disp div {
     background-color: #fff;
-    position: absolute;
     z-index: 0;
+}
+.lanes-cont div {
+    z-index: 1;
+    overflow: hidden;
+}
+.lanes-cont div, .lanes-disp div {
+    position: absolute;
 }
 
 .Loading {

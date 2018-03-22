@@ -118,10 +118,10 @@ class App extends Component {
     let frames = [];
     json.map(function(frame) {
       let cars = [];
-      frame.map(function(car) {
+      frame['objects'].map(function(car) {
         cars.push({
-          y: Math.floor((car.bounding_box[0] - car.bounding_box[2] / 2) / 2),
-          x: MAP_WIDTH - Math.floor((car.bounding_box[1] - car.bounding_box[3] / 2) / 2),
+          y: Math.floor(car.bounding_box[1] / 2),
+          x: Math.floor(car.bounding_box[0]),
           type: car.type,
           direction: direction,
           tracking_id: car.tracking_id,
@@ -143,9 +143,9 @@ class App extends Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">NoTraffic</h1>
         </header>
-        <Container>
+        <Container fluid>
           <Row>
-            <Col xs={6}>
+            <Col xs={7}>
               <Map ref="map"
                   frames={this.state.frames}
                   currentFrame={this.state.currentFrame}
@@ -156,35 +156,35 @@ class App extends Component {
                   loading={this.state.loading}>
               </Map>
             </Col>
-            <Col xs={6}>
-            <Row>
-              <Col xs={12}>
-                <Videos ref="videos"
-                        readVideoFile={this.readVideoFile.bind(this)} 
-                        loadFiles={this.loadFiles.bind(this)} 
-                        onProgress={this.onProgress.bind(this)}
-                        onEnded={this.onEnded.bind(this)}
-                        playing={this.state.playing}
-                        playbackRate={this.state.playbackRate} 
-                        setPlaybackRate={this.setPlaybackRate.bind(this)} 
-                        urls={this.state.urls}>
-                </Videos> 
-              </Col>
-            </Row>
-            <Row>
-              <Col xs={12}>
-                <Controls ref="controls"
-                        playing={this.state.playing}
-                        played={this.state.played} 
-                        playPause={this.playPause.bind(this)}
-                        playbackRate={this.state.playbackRate} 
-                        setPlaybackRate={this.setPlaybackRate.bind(this)} 
-                        onSeekMouseDown={this.onSeekMouseDown.bind(this)}
-                        onSeekChange={this.onSeekChange.bind(this)}
-                        onSeekMouseUp={this.onSeekMouseUp.bind(this)}>
-                </Controls>
-              </Col>
-            </Row>
+            <Col xs={5}>
+              <Row>
+                <Col xs={12}>
+                  <Videos ref="videos"
+                          readVideoFile={this.readVideoFile.bind(this)} 
+                          loadFiles={this.loadFiles.bind(this)} 
+                          onProgress={this.onProgress.bind(this)}
+                          onEnded={this.onEnded.bind(this)}
+                          playing={this.state.playing}
+                          playbackRate={this.state.playbackRate} 
+                          setPlaybackRate={this.setPlaybackRate.bind(this)} 
+                          urls={this.state.urls}>
+                  </Videos> 
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={12}>
+                  <Controls ref="controls"
+                          playing={this.state.playing}
+                          played={this.state.played} 
+                          playPause={this.playPause.bind(this)}
+                          playbackRate={this.state.playbackRate} 
+                          setPlaybackRate={this.setPlaybackRate.bind(this)} 
+                          onSeekMouseDown={this.onSeekMouseDown.bind(this)}
+                          onSeekChange={this.onSeekChange.bind(this)}
+                          onSeekMouseUp={this.onSeekMouseUp.bind(this)}>
+                  </Controls>
+                </Col>
+              </Row>
             </Col>
           </Row>          
         </Container>
