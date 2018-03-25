@@ -30,11 +30,20 @@ class Map extends Component {
               let _vehicles = directionFrames[self.props.currentFrame].map(function(vehicle) {
                 let x = vehicle.x;
                 let y = vehicle.y;
+                if(y > MAP_HEIGHT / 2 - LANE_WIDTH / 2 - 10) {
+                  return null;
+                }
                 return (
                     <Vehicle key={vehicle.key} 
                              x={x}
                              y={y} 
                              type={vehicle.type}
+                             speed={vehicle.speed}
+                             ttc={vehicle.ttc}
+                             distance={vehicle.distance}
+                             showSpeed={self.props.showSpeed}
+                             showTTC={self.props.showTTC}
+                             showDistance={self.props.showDistance}
                              >
                     </Vehicle>
                 );
@@ -92,16 +101,16 @@ class Map extends Component {
       <div>
         <div className="Map" style={mapStyle}>
           <div className="lanes-cont">
-            <div style={lane0Style}>
+            <div className="lane" style={lane0Style}>
               {vehicles[DIRECTIONS.TOP_TO_DOWN]}
             </div>
-            <div style={lane1Style}>
+            <div className="lane" style={lane1Style}>
               {vehicles[DIRECTIONS.RIGHT_TO_LEFT]}
             </div>
-            <div style={lane2Style}>
+            <div className="lane" style={lane2Style}>
               {vehicles[DIRECTIONS.DOWN_TO_UP]}
             </div>
-            <div style={lane3Style}>
+            <div className="lane" style={lane3Style}>
               {vehicles[DIRECTIONS.LEFT_TO_RIGHT]}
             </div>
           </div>

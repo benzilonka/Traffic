@@ -14,9 +14,40 @@ class Vehicle extends Component {
         width: this.getVehicleDimensions(this.props.type).width + 'px',
         height: this.getVehicleDimensions(this.props.type).height + 'px'
     }
+    let speed = null;
+    if(this.props.showSpeed) {
+      speed = (
+        <span>speed: {this.props.speed.toFixed(2)} m/s</span>
+      );
+    }
+    let ttc = null;
+    if(this.props.showTTC) {
+      if(this.props.ttc > -1) {
+        ttc = (
+          <span>ttc: {this.props.ttc.toFixed(2)} s</span>
+        );
+      }
+      else {
+        ttc = (
+          <span>ttc: -</span>
+        );
+      }
+    }
+    let distance = null;
+    if(this.props.showDistance) {
+      distance = (
+        <span>dis: {this.props.distance.toFixed(2)} m</span>
+      );
+    }
+    let label = (
+      <div className="vehicle-label">
+           {speed} &nbsp;&nbsp; {ttc} &nbsp;&nbsp; {distance}
+      </div>
+    );
 
     return (
-      <div className="vehicle" style={style}>        
+      <div className="vehicle" style={style}>
+        {label}
       </div>
     );
   }
