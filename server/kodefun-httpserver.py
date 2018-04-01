@@ -3,10 +3,13 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from io import BytesIO
+
+import Clean_Data
 import Parser
 
 def getFrames(meta_file, json_file):
-    return Parser.fix_file(meta_file, json.loads(json_file))
+    return Clean_Data.clean(meta_file)
+
 
 #Create custom HTTPRequestHandler class
 class KodeFunHTTPRequestHandler(BaseHTTPRequestHandler):
