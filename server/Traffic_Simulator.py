@@ -1,3 +1,4 @@
+import math
 import random
 import numpy as np
 from datetime import datetime
@@ -290,6 +291,8 @@ def frame_time_lapse(current_frame, lanes_array, lane_dimentions, light):
 
 def get_random_speed(car_type):
     vehicle_speed = {'car': [25, 70, 120], 'bus': [15, 55, 110], 'truck': [10, 45, 110]}
+    top_speed = np.random.choice(vehicle_speed[car_type], p=[0.2, 0.6, 0.2])
+    return random.uniform(0, top_speed) / 3.6
     
 
 def get_random_car_type():
@@ -377,8 +380,8 @@ buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
 number_positions = get_available_positions_number(x_test_4, lanes_array_test, buffer)
 print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
 
-# with open("new_data.meta", 'w') as output:
-#     for i in range(0, 200):
-#         x_test = get_frame(x_test, lanes_array_test, lane_dimentions_test, "green", 0.25)
-#         output.write(str(x_test) + "\n")
+with open("new_data.meta", 'w') as output:
+     for i in range(0, 200):
+        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 0.25)
+        output.write(str(x_test_1) + "\n")
 # # extractVehiclesPerLane(frame, lanesArray)
