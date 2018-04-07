@@ -204,7 +204,6 @@ lanes_array_test = [{'A': [0, 0], 'B': [23, 0], 'C': [0, 700], 'D': [23, 700]},
                     {'A': [23, 0], 'B': [47, 0], 'C': [23, 700], 'D': [47, 700]},
                     {'A': [47, 0], 'B': [70, 0], 'C': [47, 700], 'D': [70, 700]}]
 lane_dimentions_test = [4.6, 200]
-# print(int(random.uniform(0, len(lanes_array))))
 x_test_1 = {'frame_index': 0, 'objects': []}
 
 x_test_2 = {'frame_index': 0, 'objects': [{'confidence': 1.0, 'alert_tags': [],
@@ -225,23 +224,20 @@ x_test_3 = {'frame_index': 0, 'objects': [{'confidence': 1.0, 'alert_tags': [],
                                            'speed': 21.2, 'created_at': '2017-12-22 10:29:13.857687'}]}
 
 x_test_4 = {'frame_index': 0, 'objects': [{'confidence': 1.0, 'alert_tags': [],
-                                           'bounding_box': [23, 0, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
+                                           'bounding_box': [35, 1, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
                                            'tracking_id': 1, 'static': True, 'type': 'car', 'lost': False,
                                            'counted': False,
-                                           'speed': 13.124, 'created_at': '2017-12-22 10:29:13.857687'},
+                                           'speed': 0, 'created_at': '2017-12-22 10:29:13.857687'},
                                           {'confidence': 1.0, 'alert_tags': [],
-                                           'bounding_box': [11, 0, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
+                                           'bounding_box': [11, 0.87, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
                                            'tracking_id': 2, 'static': True, 'type': 'car', 'lost': False,
                                            'counted': False,
-                                           'speed': 21.2, 'created_at': '2017-12-22 10:29:13.857687'},
+                                           'speed': 0, 'created_at': '2017-12-22 10:29:13.857687'},
                                           {'confidence': 1.0, 'alert_tags': [],
-                                           'bounding_box': [47, 0, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
+                                           'bounding_box': [58, 0, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
                                            'tracking_id': 2, 'static': True, 'type': 'car', 'lost': False,
                                            'counted': False,
-                                           'speed': 7.2, 'created_at': '2017-12-22 10:29:13.857687'}]}
-
-
-# print(get_ratio(lanes_array[0], lane_dimentions))
+                                           'speed': 0, 'created_at': '2017-12-22 10:29:13.857687'}]}
 
 
 def get_max_y(gui_dimensions):
@@ -257,43 +253,83 @@ def get_ratio(cars_lane, lane_length):
     return max_y / lane_length
 
 
-def get_new_position(car, cars_lane, lane_dimension):
-    speed_per_frame = float(car['speed'] / 15)
+def get_new_position(car_info, cars_lane, lane_dimension):
+    speed_per_frame = float(car_info['speed'] / 15)
     vehicle_advanced = float(speed_per_frame * float(get_ratio(cars_lane, lane_dimension[1])))
-    return car['bounding_box'][1] + vehicle_advanced
+    return car_info['bounding_box'][1] + vehicle_advanced
 
 
-def is_car_finished(car, lanes_array):
-    lane = get_car_lane(car, lanes_array)
+def is_car_finished(car_info, lanes_array):
+    lane = get_car_lane(car_info, lanes_array)
     max_y = get_max_y(lane)
-    return max_y < car['bounding_box'][1]
+    return max_y < car_info['bounding_box'][1]
 
 
-def get_car_lane(car, lanes_array):
+def get_car_lane(car_info, lanes_array):
     new_lane = None
     for lane in lanes_array:
-        if lane['A'][0] <= car['bounding_box'][0] <= lane['B'][0]:
+        if lane['A'][0] <= car_info['bounding_box'][0] <= lane['B'][0]:
             new_lane = lane
     return new_lane
 
 
-def frame_time_lapse(current_frame, lanes_array, lane_dimentions, light):
-    cars = []
+def front_car_distance(current_car, current_frame):
+    car_position = 700
     for car in current_frame['objects']:
-        car_lane = get_car_lane(car, lanes_array)
-        car['bounding_box'][1] = get_new_position(car, car_lane, lane_dimentions)
-        if not is_car_finished(car, lanes_array):
-            cars.append(car)
+        if current_car['bounding_box'][0] == car['bounding_box'][0] and \
+                current_car['bounding_box'][1] < car['bounding_box'][1] < car_position:
+            car_position = car['bounding_box'][1]
+    return car_position - current_car['bounding_box'][1]
+
+
+def get_front_car(current_car, current_frame):
+    front_car = None
+    car_position = 700
+    for car_info in current_frame['objects']:
+        if current_car['bounding_box'][0] == car_info['bounding_box'][0] and \
+                current_car['bounding_box'][1] < car_info['bounding_box'][1] < car_position:
+            car_position = car_info['bounding_box'][1]
+            front_car = car_info
+    return front_car
+
+
+def adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, lane_ratio):
+    new_speed = car_info['speed']
+    light_accelertion_distribution = {'green': [], "orange": [], 'red': []}
+    distance_from_front_car = front_car_distance(car_info, current_frame)
+    if distance_from_front_car > (lane_ratio / 5):
+        if new_speed == 0:
+            ttc = 999999
+        else:
+            ttc = float(distance_from_front_car / (new_speed * lane_ratio))
+        max_deceleration_rate = np.random.choice(np.random.normal(6, 1.55, 1000)) / 15
+        min_deceleration_rate = max(1, max_deceleration_rate - ttc)
+    else:
+        front_car = get_front_car(car_info, current_frame)
+        if front_car is not None:
+            front_car['speed'] = 0
+        new_speed = 0
+    return new_speed
+
+
+def frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, accident_rate):
+    cars = []
+    for car_info in current_frame['objects']:
+        car_lane = get_car_lane(car_info, lanes_array)
+        car_info['bounding_box'][1] = get_new_position(car_info, car_lane, lane_dimensions)
+        ratio = get_ratio(lanes_array[0], lane_dimensions[1])
+        car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, ratio)
+        if not is_car_finished(car_info, lanes_array):
+            cars.append(car_info)
     frame_index = current_frame['frame_index'] + 1
     return {'frame_index': frame_index, 'objects': cars}
-
 
 
 def get_random_speed(car_type):
     vehicle_speed = {'car': [25, 70, 120], 'bus': [15, 55, 110], 'truck': [10, 45, 110]}
     top_speed = np.random.choice(vehicle_speed[car_type], p=[0.2, 0.6, 0.2])
     return random.uniform(0, top_speed) / 3.6
-    
+
 
 def get_random_car_type():
     return np.random.choice(['car', 'bus', 'truck'], p=[0.75, 0.15, 0.1])
@@ -302,6 +338,7 @@ def get_random_car_type():
 def add_new_cars(current_frame, cars_position):
     new_cars = []
     seq = [x['tracking_id'] for x in current_frame['objects']]
+    seq.append(1)
     new_tracking_id = max(seq)
     for car_position in cars_position:
         new_bbox = car_position
@@ -319,32 +356,36 @@ def add_new_cars(current_frame, cars_position):
 
 def get_available_positions_number(current_frame, lanes_array, buffer_distance):
     ans = []
-    lane_list = []
-    for car in current_frame['objects']:
-        lane = get_car_lane(car, lanes_array)
-        if (car['bounding_box'][1] <= buffer_distance) and (not (lane in lane_list)):
-            ans.append([car['bounding_box'][0], 0, 0, 0])
-            lane_list.append(lane)
+    lane_checked = []
+    occupied_lane = []
+    for car_info in current_frame['objects']:
+        lane = get_car_lane(car_info, lanes_array)
+        if (car_info['bounding_box'][1] <= buffer_distance) and (not (lane in lane_checked)):
+            occupied_lane.append(int((lane['A'][0] + lane['B'][0]) / 2))
+    for lane in lanes_array:
+        lane_center = int((lane['A'][0] + lane['B'][0]) / 2)
+        if lane_center not in occupied_lane:
+            ans.append([lane_center, 0, 0, 0])
     return ans
 
 
 def random_car_quantity(traffic_density, number_of_positions):
-    lambda_value = traffic_density / (60 * 15)
     ans = []
+    lambda_value = traffic_density / (60 * 15)
     for position in number_of_positions:
         if random.uniform(0, 1) <= np.random.poisson(lambda_value, 1):
             ans.append(position)
     return ans
 
 
-def get_frame(current_frame, lanes_array, lane_dimentions, light, traffic_density):
-    new_frame = frame_time_lapse(current_frame, lanes_array, lane_dimentions, light)
-    print(new_frame)
-    buffer_distance = float(get_ratio(lanes_array[0], lane_dimentions[1]) / 3)
+def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_density, accident_rate):
+    new_frame = frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, accident_rate)
+    buffer_distance = float(get_ratio(lanes_array[0], lane_dimensions[1]) / 2)
     number_of_positions = get_available_positions_number(current_frame, lanes_array, buffer_distance)
+    print(number_of_positions)
     new_cars = add_new_cars(new_frame, random_car_quantity(traffic_density, number_of_positions))
-    for car in new_cars:
-        new_frame['objects'].append(car)
+    for car_info in new_cars:
+        new_frame['objects'].append(car_info)
     return new_frame
 
 
@@ -366,22 +407,248 @@ def get_frame(current_frame, lanes_array, lane_dimentions, light, traffic_densit
 # lst.append([3, 4, 5])
 # a = test2(lst)
 # test(a)
-traffic_density = 60
-buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
-number_positions = get_available_positions_number(x_test_1, lanes_array_test, buffer)
-print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
-buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
-number_positions = get_available_positions_number(x_test_2, lanes_array_test, buffer)
-print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
-buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
-number_positions = get_available_positions_number(x_test_3, lanes_array_test, buffer)
-print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
-buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
-number_positions = get_available_positions_number(x_test_4, lanes_array_test, buffer)
-print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
+# traffic_density = 60
+# buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
+# number_positions = get_available_positions_number(x_test_1, lanes_array_test, buffer)
+# print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
+# buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
+# number_positions = get_available_positions_number(x_test_2, lanes_array_test, buffer)
+# print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
+# buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
+# number_positions = get_available_positions_number(x_test_3, lanes_array_test, buffer)
+# print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
+# buffer = float(get_ratio(lanes_array_test[0], lane_dimentions_test[1]) / 3)
+# number_positions = get_available_positions_number(x_test_4, lanes_array_test, buffer)
+# print(min(number_positions, random_car_quantity(traffic_density, number_positions)))
+
+# x_test_1 = {'frame_index': 195, 'objects': [{'speed': 8.630630962187603, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 389.6660809971818, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.752424', 'lost': False,
+#                                              'tracking_id': 2, 'counted': False},
+#                                             {'speed': 8.630630962187603, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 388.6660809971818, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.752424', 'lost': False,
+#                                              'tracking_id': 2, 'counted': False},
+#                                             {'speed': 13.397396485954323, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [11, 584.5730666704749, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.753424', 'lost': False,
+#                                              'tracking_id': 3, 'counted': False},
+#                                             {'speed': 0.5527901091091396, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 23.991090735336595, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.753424', 'lost': False,
+#                                              'tracking_id': 4, 'counted': False},
+#                                             {'speed': 7.122364886345414, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 305.78686578709636, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.755424', 'lost': False,
+#                                              'tracking_id': 5, 'counted': False},
+#                                             {'speed': 9.606563638906426, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 405.71720434981563, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.756424', 'lost': False,
+#                                              'tracking_id': 6, 'counted': False},
+#                                             {'speed': 9.780434844846907, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 401.6498576283804, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.758424', 'lost': False,
+#                                              'tracking_id': 8, 'counted': False},
+#                                             {'speed': 3.7263995984068745, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 150.42233045569066, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.760424', 'lost': False,
+#                                              'tracking_id': 10, 'counted': False},
+#                                             {'speed': 5.651536555812757, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 222.85892485088206, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.762424', 'lost': False,
+#                                              'tracking_id': 11, 'counted': False},
+#                                             {'speed': 4.11431059238817, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 157.44095200205416, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.765425', 'lost': False,
+#                                              'tracking_id': 12, 'counted': False},
+#                                             {'speed': 13.535134647075964, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 517.9444858281082, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.765425', 'lost': False,
+#                                              'tracking_id': 13, 'counted': False},
+#                                             {'speed': 11.849621749020772, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 442.38587863010963, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.768425', 'lost': False,
+#                                              'tracking_id': 14, 'counted': False},
+#                                             {'speed': 18.58520937311935, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 685.1747188890005, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.769425', 'lost': False,
+#                                              'tracking_id': 15, 'counted': False},
+#                                             {'speed': 8.249057967784044, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 296.41614964237425, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.772425', 'lost': False,
+#                                              'tracking_id': 16, 'counted': False},
+#                                             {'speed': 8.840166404022945, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 303.21770765798675, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.780425', 'lost': False,
+#                                              'tracking_id': 18, 'counted': False},
+#                                             {'speed': 1.6970660538996345, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 57.021419411027594, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.783426', 'lost': False,
+#                                              'tracking_id': 20, 'counted': False},
+#                                             {'speed': 9.357235024768581, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 296.93625811932276, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.801427', 'lost': False,
+#                                              'tracking_id': 21, 'counted': False},
+#                                             {'speed': 3.6096339439440968, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [11, 112.01897339373193, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.814427', 'lost': False,
+#                                              'tracking_id': 22, 'counted': False},
+#                                             {'speed': 11.633285343811417, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 361.0196218362808, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.814427', 'lost': False,
+#                                              'tracking_id': 23, 'counted': False},
+#                                             {'speed': 16.446534449453114, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 502.7157363382849, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.826428', 'lost': False,
+#                                              'tracking_id': 24, 'counted': False},
+#                                             {'speed': 9.601837824628609, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 277.81317439258777, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.869431', 'lost': False,
+#                                              'tracking_id': 25, 'counted': False},
+#                                             {'speed': 2.6048588509871116, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 74.15164862476642, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.880431', 'lost': False,
+#                                              'tracking_id': 26, 'counted': False},
+#                                             {'speed': 3.2002121345387375, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [11, 88.85922360235908, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.898432', 'lost': False,
+#                                              'tracking_id': 27, 'counted': False},
+#                                             {'speed': 3.425314261564256, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 93.51107934070436, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.910433', 'lost': False,
+#                                              'tracking_id': 28, 'counted': False},
+#                                             {'speed': 18.752673964000238, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 481.3186317426731, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.952435', 'lost': False,
+#                                              'tracking_id': 29, 'counted': False},
+#                                             {'speed': 3.271872495004087, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 78.63400229659808, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'truck',
+#                                              'created_at': '2018-04-05 18:12:50.978437', 'lost': False,
+#                                              'tracking_id': 30, 'counted': False},
+#                                             {'speed': 18.68251576394835, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 435.9253678254617, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.984437', 'lost': False,
+#                                              'tracking_id': 31, 'counted': False},
+#                                             {'speed': 0.3074951983260703, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [11, 6.887892442503988, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:50.992438', 'lost': False,
+#                                              'tracking_id': 32, 'counted': False},
+#                                             {'speed': 17.85104437647752, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 391.5329066574066, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:50.996438', 'lost': False,
+#                                              'tracking_id': 33, 'counted': False},
+#                                             {'speed': 5.012198235388051, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 97.06957249201506, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:51.30440', 'lost': False,
+#                                              'tracking_id': 34, 'counted': False},
+#                                             {'speed': 1.5850912192621536, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 28.478805572743386, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.62442', 'lost': False,
+#                                              'tracking_id': 35, 'counted': False},
+#                                             {'speed': 12.380479965851624, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [11, 219.54717806110256, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.68442', 'lost': False,
+#                                              'tracking_id': 36, 'counted': False},
+#                                             {'speed': 13.233936250853418, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 219.2422105558053, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:51.98444', 'lost': False,
+#                                              'tracking_id': 37, 'counted': False},
+#                                             {'speed': 17.002980958664658, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 265.813268987124, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.122445', 'lost': False,
+#                                              'tracking_id': 38, 'counted': False},
+#                                             {'speed': 22.47520689433308, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 319.89711146267416, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.164447', 'lost': False,
+#                                              'tracking_id': 39, 'counted': False},
+#                                             {'speed': 9.694485049459766, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [11, 115.36437208857132, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'truck',
+#                                              'created_at': '2018-04-05 18:12:51.219451', 'lost': False,
+#                                              'tracking_id': 40, 'counted': False},
+#                                             {'speed': 6.773509143258638, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [35, 69.54136053745538, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'truck',
+#                                              'created_at': '2018-04-05 18:12:51.257453', 'lost': False,
+#                                              'tracking_id': 41, 'counted': False},
+#                                             {'speed': 4.314464832600776, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 39.26162997666708, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.287454', 'lost': False,
+#                                              'tracking_id': 42, 'counted': False},
+#                                             {'speed': 13.974681558640015, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 107.60504800152805, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.323457', 'lost': False,
+#                                              'tracking_id': 43, 'counted': False},
+#                                             {'speed': 12.881173772108871, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 93.17382361825416, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.335457', 'lost': False,
+#                                              'tracking_id': 44, 'counted': False},
+#                                             {'speed': 10.123970363296818, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 70.8677925430777, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.341458', 'lost': False,
+#                                              'tracking_id': 45, 'counted': False},
+#                                             {'speed': 27.259951383336684, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [35, 165.37703839224258, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+#                                              'created_at': '2018-04-05 18:12:51.366459', 'lost': False,
+#                                              'tracking_id': 46, 'counted': False},
+#                                             {'speed': 13.21835269590198, 'new': True, 'alert_tags': [], 'static': False,
+#                                              'bounding_box': [58, 58.60136361849881, 0, 0], 'confidence': 1.0,
+#                                              'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.381460', 'lost': False,
+#                                              'tracking_id': 47, 'counted': False},
+#                                             {'speed': 1.3050694084056036, 'new': True, 'alert_tags': [],
+#                                              'static': False, 'bounding_box': [58, 5.481291515303534, 0, 0],
+#                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
+#                                              'created_at': '2018-04-05 18:12:51.384460', 'lost': False,
+#                                              'tracking_id': 48, 'counted': False}]}
+car = {'speed': 8.630630962187603, 'new': True, 'alert_tags': [], 'static': False,
+       'bounding_box': [35, 388.6660809971818, 0, 0], 'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+       'created_at': '2018-04-05 18:12:50.752424', 'lost': False, 'tracking_id': 2, 'counted': False}
+
 
 with open("new_data.meta", 'w') as output:
-     for i in range(0, 200):
-        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 0.25)
+    for i in range(0, 200):
+        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 60, 1)
+        print(x_test_1)
         output.write(str(x_test_1) + "\n")
 # # extractVehiclesPerLane(frame, lanesArray)
