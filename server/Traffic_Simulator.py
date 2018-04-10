@@ -256,6 +256,8 @@ x_test_4 = {'frame_index': 0, 'objects': [{'confidence': 1.0, 'alert_tags': [],
                                            'counted': False,
                                            'speed': 0, 'created_at': '2017-12-22 10:29:13.857687'}]}
 
+# return the length of the lane
+
 
 def get_max_y(gui_dimensions):
     max_point = 0
@@ -264,10 +266,16 @@ def get_max_y(gui_dimensions):
             max_point = gui_dimensions[point][1]
     return max_point
 
+# calculates the ratio between the actual lane length and the GUI length.
+# e.g if the real length is 200 and the GUI length is 700 3.5  pixels are 1 meter and the function will return 3.5
+
 
 def get_ratio(cars_lane, lane_length):
     max_y = get_max_y(cars_lane)
     return max_y / lane_length
+
+
+# calculates the car new position according to the speed
 
 
 def get_new_position(car_info, cars_lane, lane_dimension):
@@ -276,10 +284,16 @@ def get_new_position(car_info, cars_lane, lane_dimension):
     return car_info['bounding_box'][1] + vehicle_advanced
 
 
+# returns true if the car cross the end of the lane
+
+
 def is_car_finished(car_info, lanes_array):
     lane = get_car_lane(car_info, lanes_array)
     max_y = get_max_y(lane)
     return max_y < car_info['bounding_box'][1]
+
+
+# returns the lane that the car is in.
 
 
 def get_car_lane(car_info, lanes_array):
@@ -288,6 +302,9 @@ def get_car_lane(car_info, lanes_array):
         if lane['A'][0] <= car_info['bounding_box'][0] <= lane['B'][0]:
             new_lane = lane
     return new_lane
+
+
+# returns the distance of a car from the closest car in front of it.
 
 
 def front_car_distance(current_car, current_frame):
@@ -299,6 +316,9 @@ def front_car_distance(current_car, current_frame):
     return car_position - current_car['bounding_box'][1]
 
 
+# returns the car in front of current_car.
+
+
 def get_front_car(current_car, current_frame):
     front_car = None
     car_position = 700
@@ -308,6 +328,10 @@ def get_front_car(current_car, current_frame):
             car_position = car_info['bounding_box'][1]
             front_car = car_info
     return front_car
+
+
+# returns a new speed of a car according to the distance from the front car and the car speed (ttc)
+# uses a random factor of stopping (normal distribution)
 
 
 def get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, lane_ratio):
@@ -342,6 +366,10 @@ def get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, l
     return new_speed
 
 
+# checks if the distance from the front car is far enough (if not the speed will be zero because it a "accident")
+# if not will get a new speed with get_new_speed function
+
+
 def adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, lane_ratio):
     new_speed = car_info['speed']
     light_acceleration_distribution = {'green': [], "orange": [], 'red': []}
@@ -356,17 +384,25 @@ def adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, lane_
     return new_speed
 
 
+# the main function that generate a new frame from the previous one, take into account the lane length, the light(for
+# now not implemented) and accident rate(also not implemented) every car in the frame gets evaluated from the driver
+# point of view
+
+
 def frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, accident_rate):
     cars = []
+    ratio = get_ratio(lanes_array[0], lane_dimensions[1])
     for car_info in current_frame['objects']:
         car_lane = get_car_lane(car_info, lanes_array)
         car_info['bounding_box'][1] = get_new_position(car_info, car_lane, lane_dimensions)
-        ratio = get_ratio(lanes_array[0], lane_dimensions[1])
         car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, ratio)
         if not is_car_finished(car_info, lanes_array):
             cars.append(car_info)
     frame_index = current_frame['frame_index'] + 1
     return {'frame_index': frame_index, 'objects': cars}
+
+
+# generates a random speed according to the car type
 
 
 def get_random_speed(car_type):
@@ -398,6 +434,11 @@ def add_new_cars(current_frame, cars_position):
     return new_cars
 
 
+# returns the lanes that are vacant from car in the length of buffer_distance e.g if the buffer is size 5
+# and there is a car in position 3 than the function will not return this lane, if there isn't any car in the strip
+# from 0 to 5(the buffer length) than the function will return it.
+
+
 def get_available_positions_number(current_frame, lanes_array, buffer_distance):
     ans = []
     lane_checked = []
@@ -411,6 +452,10 @@ def get_available_positions_number(current_frame, lanes_array, buffer_distance):
         if lane_center not in occupied_lane:
             ans.append([lane_center, 0, 0, 0])
     return ans
+
+
+# returns a subset of positions from number_of_positions according to the traffic_density.
+# uses a poisson distribution to return a reasonable position quantity
 
 
 def random_car_quantity(traffic_density, number_of_positions):
