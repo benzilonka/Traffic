@@ -1,5 +1,7 @@
 import math
 import random
+import sys
+
 import numpy as np
 from datetime import datetime
 
@@ -205,6 +207,21 @@ lanes_array_test = [{'A': [0, 0], 'B': [23, 0], 'C': [0, 700], 'D': [23, 700]},
                     {'A': [47, 0], 'B': [70, 0], 'C': [47, 700], 'D': [70, 700]}]
 lane_dimentions_test = [4.6, 200]
 x_test_1 = {'frame_index': 0, 'objects': []}
+    # {'speed': 0, 'new': True, 'alert_tags': [], 'static': False, 'bounding_box': [35, 26.45918013036104, 0, 0],
+    #  'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car', 'created_at': '2018-04-07 18:40:45.246162',
+    #  'lost': False, 'tracking_id': 36, 'counted': False},
+    # {'speed': 0, 'new': True, 'alert_tags': [], 'static': False, 'bounding_box': [35, 26.54151462533078, 0, 0],
+    #  'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car', 'created_at': '2018-04-07 18:40:45.254163',
+    #  'lost': False, 'tracking_id': 37, 'counted': False},
+    # {'speed': 0, 'new': True, 'alert_tags': [], 'static': False, 'bounding_box': [35, 11.134611351746441, 0, 0],
+    #  'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car', 'created_at': '2018-04-07 18:40:45.264163',
+    #  'lost': False, 'tracking_id': 40, 'counted': False},
+    # {'speed': 0, 'new': True, 'alert_tags': [], 'static': False, 'bounding_box': [35, 10.90329295277763, 0, 0],
+    #  'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus', 'created_at': '2018-04-07 18:40:45.297165',
+    #  'lost': False, 'tracking_id': 41, 'counted': False},
+    # {'speed': 0, 'new': True, 'alert_tags': [], 'static': False, 'bounding_box': [35, 10.230768867451836, 0, 0],
+    #  'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus', 'created_at': '2018-04-07 18:40:45.358169',
+    #  'lost': False, 'tracking_id': 43, 'counted': False}]}
 
 x_test_2 = {'frame_index': 0, 'objects': [{'confidence': 1.0, 'alert_tags': [],
                                            'bounding_box': [11, 0, 0, 0], 'new': False, 'times_lost_by_convnet': 0,
@@ -274,7 +291,7 @@ def get_car_lane(car_info, lanes_array):
 
 
 def front_car_distance(current_car, current_frame):
-    car_position = 700
+    car_position = sys.maxsize
     for car in current_frame['objects']:
         if current_car['bounding_box'][0] == car['bounding_box'][0] and \
                 current_car['bounding_box'][1] < car['bounding_box'][1] < car_position:
@@ -293,17 +310,44 @@ def get_front_car(current_car, current_frame):
     return front_car
 
 
+def get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, lane_ratio):
+    if new_speed == 0:
+        ttc = sys.maxsize
+    else:
+        ttc = float(distance_from_front_car / (new_speed * lane_ratio))
+    acceleration_deceleration = 6
+    if ttc >= 2.5:
+        acceleration_deceleration = 10
+        ttc = 3.5 / ttc
+    counter = 0
+    add_to_speed = 0
+    while distance_from_front_car <= (lane_ratio / 5) and counter < 100:
+        counter += 1
+        max_change_speed_rate = np.random.choice(np.random.normal(acceleration_deceleration, 1.55, 1000)) / 15
+        min_change_speed_rate = max(1, max_change_speed_rate - (ttc / 15))
+        x = 0
+        while x <= add_to_speed:
+            x = random.uniform(min_change_speed_rate, max_change_speed_rate)
+        add_to_speed = x
+        if ttc >= 2.5:
+            add_to_speed *= -1
+        new_speed += add_to_speed
+        if new_speed < 0:
+            new_speed = 0
+        car_copy = np.copy.deepcopy(car_info)
+        car_copy['speed'] = new_speed
+        car_copy['bounding_box'][1] += float(float(new_speed / 15) * lane_ratio)
+        distance_from_front_car = front_car_distance(car_copy, current_frame)
+        acceleration_deceleration += 0.25
+    return new_speed
+
+
 def adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, lane_ratio):
     new_speed = car_info['speed']
-    light_accelertion_distribution = {'green': [], "orange": [], 'red': []}
+    light_acceleration_distribution = {'green': [], "orange": [], 'red': []}
     distance_from_front_car = front_car_distance(car_info, current_frame)
     if distance_from_front_car > (lane_ratio / 5):
-        if new_speed == 0:
-            ttc = 999999
-        else:
-            ttc = float(distance_from_front_car / (new_speed * lane_ratio))
-        max_deceleration_rate = np.random.choice(np.random.normal(6, 1.55, 1000)) / 15
-        min_deceleration_rate = max(1, max_deceleration_rate - ttc)
+        new_speed = get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, lane_ratio)
     else:
         front_car = get_front_car(car_info, current_frame)
         if front_car is not None:
@@ -382,7 +426,6 @@ def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_densit
     new_frame = frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, accident_rate)
     buffer_distance = float(get_ratio(lanes_array[0], lane_dimensions[1]) / 2)
     number_of_positions = get_available_positions_number(current_frame, lanes_array, buffer_distance)
-    print(number_of_positions)
     new_cars = add_new_cars(new_frame, random_car_quantity(traffic_density, number_of_positions))
     for car_info in new_cars:
         new_frame['objects'].append(car_info)
@@ -641,14 +684,12 @@ def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_densit
 #                                              'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'car',
 #                                              'created_at': '2018-04-05 18:12:51.384460', 'lost': False,
 #                                              'tracking_id': 48, 'counted': False}]}
-car = {'speed': 8.630630962187603, 'new': True, 'alert_tags': [], 'static': False,
-       'bounding_box': [35, 388.6660809971818, 0, 0], 'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
-       'created_at': '2018-04-05 18:12:50.752424', 'lost': False, 'tracking_id': 2, 'counted': False}
-
+# car = {'speed': 8.630630962187603, 'new': True, 'alert_tags': [], 'static': False,
+#        'bounding_box': [35, 388.6660809971818, 0, 0], 'confidence': 1.0, 'times_lost_by_convnet': 0, 'type': 'bus',
+#        'created_at': '2018-04-05 18:12:50.752424', 'lost': False, 'tracking_id': 2, 'counted': False}
 
 with open("new_data.meta", 'w') as output:
-    for i in range(0, 200):
-        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 60, 1)
-        print(x_test_1)
+    for i in range(0, 1000):
+        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 20, 1)
         output.write(str(x_test_1) + "\n")
 # # extractVehiclesPerLane(frame, lanesArray)
