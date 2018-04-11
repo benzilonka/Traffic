@@ -1,4 +1,13 @@
 import json
+import numpy as np
+#import matplotlib.pyplot as plt
+import sys
+from numpy.linalg import solve
+
+# MatPlotlib
+import matplotlib.pyplot as plt
+from matplotlib import pylab
+
 
 def get_array(param):
     ans = [[], []]
@@ -37,7 +46,6 @@ def clean_routs_jsons(hash_vehicles, jsons):
 
 def clean(data):
     jsons = data.replace("'", '"').replace("False", "false").replace("True", "true").split("\n")
-    ans = []
     hash_vehicles = {}
     vehiclesSpeed = {}
     # Extract path for each vehicle by collecting location per frame from the current JSON file
@@ -113,8 +121,40 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         # Second Stage:
         #   We'll check(and fix if needed) that the vehicle movement is linear. Which means that if in x/y axis we start
         #   in high number and end in lower number, the numbers should be going down all the way or vice versa.
-        vehiclesPath[path] = linearMovement(start_location, vehiclesPath[path])
+        vehiclesPath[path] = linearMovement(start_location, end_location, vehiclesPath[path])
 
+        points = np.array(vehiclesPath[path])
+
+        numOfPoints = len(vehiclesPath[path])
+        # get x and y vectors
+        x = points[:, 0]
+        y = points[:, 1]
+
+        # calculate polynomial
+        z = np.polyfit(x, y, 3)
+        f = np.poly1d(z)
+        print(f)
+
+        # calculate new x's and y's
+        x_new = np.linspace(x[0], x[-1], numOfPoints)
+        y_new = f(x_new)
+
+        plt.plot(x, y, 'o', x_new, y_new)
+        pylab.title('Polynomial Fit with Matplotlib')
+        
+        plt.show()
+
+        """P = lagrange(vehiclesPath[path])
+        #nr = 2
+        #print("(" + str(points[nr][0]) + ", " + str(points[nr][1]) + ") P(" + str(points[nr][0]) + ")= " + str(P(points[nr][0])))
+        x_list = []
+        y_list = []
+        for x_loc, y_loc in vehiclesPath[path]:
+            x_list.append(x_loc)
+            y_list.append(y_loc)
+        c = solve(P,  np.array(y_list))
+        plot(np.array(x_list), np.array(y_list), c)"""
+    """
     # Fix and handle speeds of vehicles from given data
     for vehicle in vehiclesSpeed:
         # Third Stage:
@@ -127,8 +167,46 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
 
         # Fourth Stage:
         #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
-        vehiclesSpeed[vehicle] = checkForLegalDifferSpeed(vehiclesSpeed[vehicle])
+        vehiclesSpeed[vehicle] = checkForLegalDifferSpeed(vehiclesSpeed[vehicle])"""
     return vehiclesPath, vehiclesSpeed
+
+
+def plot(x_lst, y_lst, c):
+    x = np.linspace(x_lst.min() - 1, x_lst.max() + 1, 1000)
+
+    # Using Horner's rule for defining interpolating polynomial:
+    n = len(x_lst)
+    y = c[n - 1]
+    for j in range(n - 1, 0, -1):
+        y = y * x + c[j - 1]
+
+    ## Plotting
+    plt.figure()
+    plt.clf()
+    plt.plot(x, y, 'b-')
+    plt.plot(x_lst, y_lst, 'ro')
+    plt.ylim(y_lst.min() - 1, y_lst.max() + 1)
+
+    plt.show()
+
+
+def lagPoly(i, points, x, xi):
+    tot_mul = 1
+    for j in range(len(points)):
+        if i != j:
+            xj, yj = points[j]
+            tot_mul *= (x - xj) / float(xi - xj)
+    return tot_mul
+
+def lagrange(points):
+    def P(x):
+        total = 0
+        n = len(points)
+        for i in range(n):
+            xi, yi = points[i]
+            total += yi * lagPoly(i, points, x, xi)
+        return total
+    return P
 
 
 def checkForLegalDifferSpeed(vehicleSpeedList):
@@ -184,31 +262,46 @@ def checkInRangeAndFit(start, end, currentLocation):
                 newLocation = end
     return newLocation
 
-def linearMovement(start, path):
+def linearMovement(start, end, path):
     index = 1
     if len(path) < 2:
         return
     # check if the movement is from higher to lower numbers or vice versa
-    directionX = checkForDirection(start, path[index], 0)
-    directionY = checkForDirection(start, path[index], 1)
-    while index < len(path):
-        # if not the last location in path
-        if index != len(path) - 1:
-            if directionX == "unknown":
-                directionX = checkForDirection(path[index], path[index+1], 0)
-            if directionY == "unknown":
-                directionY = checkForDirection(path[index], path[index + 1], 1)
-            # if isOK = True, move to the next index else 'fix' the location in index+1
-            isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
-            if not isOkX:
-                path[index + 1][0] =  path[index][0]
-            isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
-            if not isOkY:
-                path[index + 1][1] =  path[index][1]
-            else:
-                index += 1
+    directionX = checkForDirection(start, end, 0)
+    directionY = checkForDirection(start, end, 1)
+    if directionX == "unknown" or directionY == "unknown":
+        if directionX == "unknown" and directionY == "unknown":
+            for i in range(index, len(path)-1):
+                path[i] = path[i-1]
+        elif directionX == "unknown" and not (directionY == "unknown"):
+            for i in range(index, len(path)-1):
+                path[i][0] = path[i-1][0]
         else:
-            index += 1
+            for i in range(index, len(path)-1):
+                path[i][1] = path[i-1][1]
+    else:
+        path = linearMovementHelper(directionX, directionY, path, index)
+    return path
+
+def linearMovementHelper(directionX, directionY, path, index):
+    # No need to change start and end locations
+    while index < len(path)-1:
+        # if not the last location in path
+        #if index != len(path) - 1:
+        """if directionX == "unknown":
+            directionX = checkForDirection(path[index], path[index+1], 0)
+        if directionY == "unknown":
+            directionY = checkForDirection(path[index], path[index + 1], 1)"""
+        # if isOK = True, move to the next index else 'fix' the location in index+1
+        isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
+        if not isOkX:
+            path[index + 1][0] =  path[index][0]
+        isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
+        if not isOkY:
+            path[index + 1][1] =  path[index][1]
+        index += 1
+    #else:
+    #    index += 1
     return path
 
 def checkForDirection(locFrom, locTo, xORy):
