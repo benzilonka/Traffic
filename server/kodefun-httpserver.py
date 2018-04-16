@@ -5,7 +5,7 @@ import json
 from io import BytesIO
 
 import Clean_Data
-import Parser
+#import Parser
 
 def getFrames(meta_file, json_file):
     return Clean_Data.clean(meta_file)
