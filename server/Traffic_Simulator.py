@@ -295,14 +295,19 @@ def get_car_lane(car_info, lanes_array):
     return new_lane
 
 
-# returns the distance of a car from the closest car in front of it.
+# returns the distance of a car from the closest car that is in front of it.
 def front_car_distance(current_car, current_frame):
-    car_position = sys.maxsize
+    car_position = 0
+    distanceToReturn = 0
+    front_car = None
     for car in current_frame['objects']:
         if current_car['bounding_box'][0] == car['bounding_box'][0] and \
                 current_car['bounding_box'][1] < car['bounding_box'][1] < car_position:
             car_position = car['bounding_box'][1]
-    return car_position - current_car['bounding_box'][1]
+            front_car = car
+    if car_position > 0:
+        distanceToReturn = car_position - current_car['bounding_box'][1]
+    return distanceToReturn, front_car
 
 
 # returns the car in front of current_car.
@@ -319,48 +324,72 @@ def get_front_car(current_car, current_frame):
 
 # returns a new speed of a car according to the distance from the front car and the car speed (ttc)
 # uses a random factor of stopping (normal distribution)
-def get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, lane_ratio):
-    if new_speed == 0:
+def get_new_speed(car_info, current_frame, current_speed, distance_from_front_car, lane_ratio, front_car_speed):
+    newSpeed = 0
+    if current_speed == 0 or current_speed == front_car_speed:
         ttc = sys.maxsize
     else:
-        ttc = float(distance_from_front_car / (new_speed * lane_ratio))
-    acceleration_deceleration = 6
-    if ttc >= 2.5:
-        acceleration_deceleration = 10
-        ttc = 3.5 / ttc
-    counter = 0
-    add_to_speed = 0
-    while distance_from_front_car <= (lane_ratio / 5) and counter < 100:
-        counter += 1
-        max_change_speed_rate = np.random.choice(np.random.normal(acceleration_deceleration, 1.55, 1000)) / 15
-        min_change_speed_rate = max(1, max_change_speed_rate - (ttc / 15))
-        x = 0
-        while x <= add_to_speed:
-            x = random.uniform(min_change_speed_rate, max_change_speed_rate)
-        add_to_speed = x
-        if ttc >= 2.5:
-            add_to_speed *= -1
-        new_speed += add_to_speed
-        if new_speed < 0:
-            new_speed = 0
-        car_copy = np.copy.deepcopy(car_info)
-        car_copy['speed'] = new_speed
-        car_copy['bounding_box'][1] += float(float(new_speed / 15) * lane_ratio)
-        distance_from_front_car = front_car_distance(car_copy, current_frame)
-        acceleration_deceleration += 0.25
-    return new_speed
+        # ttc calculation is: delta(location) / delta(velocity) = (Xfront - Xcurr) / (Vfront - Vcurr)
+        ttc = float(distance_from_front_car / ((front_car_speed * lane_ratio) - (current_speed * lane_ratio)))
+    # The current car is all alone and there is no one in front of it
+    if front_car_speed == 0 and distance_from_front_car == 0:
+        newSpeed = current_speed + 2
+    else:
+        # We need to change the current car speed (increase\decrease) and check if it's ok before returning it.
+        # If the suggested change is not ok we'll try to find a new one.
+        acceleration_deceleration = 0
+        ttc_treshold = 2.5
+        isAcceleration = False
+        # if equal or bigger the vehicle can accelerate
+        if ttc >= ttc_treshold:
+            acceleration_deceleration = 5
+            isAcceleration = True
+        else:
+            # vehicles are too close deceleration is needed
+            acceleration_deceleration = -5
+        isOK = False
+        frontCarCurrentLocation = car_info['bounding_box'][1] + distance_from_front_car
+        # The time is in seconds - 15 FPS
+        timeInFrame = 1/15
+        counter = 0
+        # keep looking for vehicle new speed until it's ok or the change won't be successful within 100 attempts
+        while not isOK and counter < 100:
+            # Convert acceleration_deceleration into velocity => v = v0 + a*t (where t is 1/15 second)
+            speedRate = current_speed + acceleration_deceleration * timeInFrame
+
+            # Choose one speed from 1000 samples, 1.55 is Standard deviation (spread or “width”) of the distribution
+            # And the mean value is speedRate
+            max_change_speed_rate = np.random.choice(np.random.normal(speedRate, 1.55, 1000))
+            if isAcceleration > 0:
+                # Need to be positive
+                min_change_speed_rate = max(1, max_change_speed_rate - ttc)
+            else:
+                min_change_speed_rate = max_change_speed_rate - ttc
+            suggestedSpeed = current_speed + random.uniform(min_change_speed_rate, max_change_speed_rate)
+            # X = X0 + [(v+v0)/2]*t (and we're converting the speed from m/s to pixel/s by multiplying it with lane_ratio)
+            frontCarNextLocatoion = frontCarCurrentLocation + (front_car_speed*lane_ratio)*timeInFrame
+            currentCarNextLocation = car_info['bounding_box'][1] + (((current_speed + suggestedSpeed)/2)*lane_ratio)*timeInFrame
+            if currentCarNextLocation < frontCarNextLocatoion:
+                isOK = True
+                newSpeed = suggestedSpeed
+            counter += 1
+    return newSpeed
 
 
-# checks if the distance from the front car is far enough (if not the speed will be zero because it a "accident")
+# checks if the distance from the front car is far enough (if not the speed will be zero because it's an "accident")
 # if not will get a new speed with get_new_speed function
 def adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, lane_ratio):
-    new_speed = car_info['speed']
+    front_car_speed = 0
+    current_speed = car_info['speed']
     light_acceleration_distribution = {'green': [], "orange": [], 'red': []}
-    distance_from_front_car = front_car_distance(car_info, current_frame)
-    if distance_from_front_car > (lane_ratio / 5):
-        new_speed = get_new_speed(car_info, current_frame, new_speed, distance_from_front_car, lane_ratio)
+    distance_from_front_car, front_car = front_car_distance(car_info, current_frame)
+    if front_car is not None:
+        front_car_speed = front_car['speed']
+    if distance_from_front_car > (lane_ratio / 5) or len(current_frame['objects']) == 1:
+        new_speed = get_new_speed(car_info, current_frame, current_speed, distance_from_front_car, lane_ratio, front_car_speed)
     else:
-        front_car = get_front_car(car_info, current_frame)
+        # An "accident" occurred
+        #front_car = get_front_car(car_info, current_frame)
         if front_car is not None:
             front_car['speed'] = 0
         new_speed = 0
