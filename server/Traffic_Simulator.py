@@ -321,7 +321,6 @@ def get_front_car(current_car, current_frame):
             front_car = car_info
     return front_car
 
-
 # returns a new speed of a car according to the distance from the front car and the car speed (ttc)
 # uses a random factor of stopping (normal distribution)
 def get_new_speed(car_info, current_frame, current_speed, distance_from_front_car, lane_ratio, front_car_speed):
@@ -404,8 +403,10 @@ def frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, acciden
     ratio = get_ratio(lanes_array[0], lane_dimensions[1])
     for car_info in current_frame['objects']:
         car_lane = get_car_lane(car_info, lanes_array)
-        car_info['bounding_box'][1] = get_new_position(car_info, car_lane, lane_dimensions)
-        car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light, accident_rate, ratio)
+        car_new_position = get_new_position(car_info, car_lane, lane_dimensions)
+        car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light, red_crossing_rate,
+                                                    accident_rate, ratio, car_new_position)
+        car_info['bounding_box'][1] = car_new_position
         if not is_car_finished(car_info, lanes_array):
             cars.append(car_info)
     frame_index = current_frame['frame_index'] + 1
@@ -472,8 +473,8 @@ def random_car_quantity(traffic_density, number_of_positions):
     return ans
 
 
-def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_density, accident_rate):
-    new_frame = frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, accident_rate)
+def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_density, red_crossing_rate, accident_rate):
+    new_frame = frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, red_crossing_rate, accident_rate)
     buffer_distance = float(get_ratio(lanes_array[0], lane_dimensions[1]) / 2)
     number_of_positions = get_available_positions_number(current_frame, lanes_array, buffer_distance)
     new_cars = add_new_cars(new_frame, random_car_quantity(traffic_density, number_of_positions))
@@ -740,6 +741,6 @@ def get_frame(current_frame, lanes_array, lane_dimensions, light, traffic_densit
 
 with open("new_data.meta", 'w') as output:
     for i in range(0, 1000):
-        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 20, 1)
+        x_test_1 = get_frame(x_test_1, lanes_array_test, lane_dimentions_test, "green", 20, 0, 1)
         output.write(str(x_test_1) + "\n")
 # # extractVehiclesPerLane(frame, lanesArray)
