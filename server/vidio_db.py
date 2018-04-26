@@ -1,3 +1,6 @@
+from datetime import datetime
+from dateutil.parser import parse
+import pandas as pd
 import pymysql.cursors
 class DB_Layer(object):
     def create_vidio_info_table (self):
@@ -30,6 +33,168 @@ class DB_Layer(object):
             connection.close()
         return
 
+    def create_alert_info_table (self):
+                  
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+            with connection.cursor() as cursor:
+                # Create a new record
+                sql = "CREATE TABLE alert_info (file_name varchar(20) NOT NULL, vidio_direction int NOT NULL, frame_index int NOT NULL, tracking_id int, alert_type varchar(20),alert_date DATE, alert_value float, alert_text text , PRIMARY KEY (file_name, vidio_direction, frame_index, tracking_id, alert_type))"
+                cursor.execute(sql)
+
+            # connection is not autocommit by default. So you must commit to save
+            # your changes.
+            connection.commit()
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "show tables"
+                cursor.execute(sql)
+                results = cursor.fetchall()
+                for result in results:
+                    print(result)
+        finally:
+            connection.close()
+        return
+    def add_rows_to_alert_info_info (self,file_name,direction, vidio_info_rows):
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+            with connection.cursor() as cursor:
+                for info_row in vidio_info_rows:
+                    objects_info  = info_row['objects']
+                    for object_info in objects_info:
+                        # Create a new record
+                        if(object_info["ttc"]!=-1):
+                            sql = "INSERT INTO `alert_info` (`file_name`, `vidio_direction`, `frame_index` , `tracking_id`, `alert_type`, `alert_value`,`alert_text`,`alert_date`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                            cursor.execute(sql, (file_name, direction , info_row["frame_index"], object_info["tracking_id"], "ttc",  object_info["ttc"],"",datetime.strptime(object_info['created_at'], '%Y-%m-%d %H:%M:%S.%f')))
+
+            # connection is not autocommit by default. So you must commit to save
+            # your changes.
+            connection.commit()
+        
+        finally:
+            connection.close()
+        return
+    def serch_by_date_alert_info (self,date_from, date_to):
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+       
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                if date_to is not None:
+                    sql = "SELECT * FROM `alert_info` WHERE `alert_date`>=%s and `alert_date`<=%s"
+                    cursor.execute(sql, (date_from, date_to))
+                else:
+                     sql = "SELECT * FROM `alert_info` WHERE `alert_date`>=%s"
+                     cursor.execute(sql, (date_from))
+                
+            
+                result = cursor.fetchall()
+
+                
+        finally:
+            connection.close()
+        return result
+    
+    def serch_by_file_name_alert_info (self,file_name):
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+       
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                
+                sql = "SELECT * FROM `alert_info` WHERE `file_name`=%s"
+                cursor.execute(sql, (file_name))
+                
+            
+                result = cursor.fetchall()
+
+                
+        finally:
+            connection.close()
+        return result
+
+    def serch_all_alert_info (self):
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+       
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "SELECT * FROM `alert_info`"
+                cursor.execute(sql, ())
+            
+                result = cursor.fetchall()
+
+                
+        finally:
+            connection.close()
+        return result
+    def delete_by_date_alert_info (self,date_from, date_to):
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                    user='project',
+                                    password='123456',
+                                    db='my_project',
+                                    charset='utf8mb4',
+                                    cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+       
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                if date_from is not None:
+                    sql = "DELETE FROM `alert_info` WHERE `alert_date`>=%s and `alert_date`<=%s"
+                    cursor.execute(sql, (date_from, date_to))
+                else:
+                     sql = "DELETE FROM `alert_info` WHERE `alert_date`<=%s"
+                     cursor.execute(sql, (date_to))
+                
+            
+                connection.commit()
+
+                
+        finally:
+            connection.close()
+        return 
     def create_junctions_table (self):
         # Connect to the database
         connection = pymysql.connect(host='localhost',
@@ -336,19 +501,25 @@ dbl.add_vidio_num_to_junction(6,4,"10/10/2012")
 print(dbl.serch_by_id_junction_info(6))
 print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 junction['name'] = 'gal'
-dbl.update_junction(junction)
-print(dbl.serch_by_id_junction_info(6))
+#dbl.update_junction(junction)
+#print(dbl.serch_by_id_junction_info(6))
 print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 #delete_by_id_from_junction_info(4)
 print('*************************')
 #print(serch_by_id_junction_info(3))
-frames_info = ({'objects': [{'confidence': 0.8, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 1, 'speed': 9.932450653113678, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [524, 232, 90, 132], 'new': False, 'counted': False}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 5, 'speed': 7.883500926853487, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [377, 326, 68, 50], 'new': False, 'counted': True}, {'confidence': 0.61, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 8, 'speed': 6.006274599496227, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [424, 280, 41, 32], 'new': False, 'counted': False}], 'frame_index': 6348724}
-,{'objects': [{'confidence': 0.67, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 0, 'speed': 9.404605335094026, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 234, 92, 132], 'new': False, 'counted': False}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 6, 'speed': 7.46454395779037, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [376, 328, 68, 50], 'new': False, 'counted': True}, {'confidence': 0.61, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 9, 'speed': 5.687080068679144, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [424, 281, 41, 32], 'new': False, 'counted': False}], 'frame_index': 6348732}
-,{'objects': [{'confidence': 0.67, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 1, 'speed': 0.0, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 233, 91, 131], 'new': False, 'counted': False}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 7, 'speed': 6.193790879731843, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [374, 329, 68, 51], 'new': False, 'counted': True}, {'confidence': 0.77, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 0, 'speed': 18.3427258131377, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [414, 289, 49, 35], 'new': False, 'counted': False}], 'frame_index': 6348741})
+frames_info = ({'objects': [{'confidence': 0.8, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 1, 'speed': 9.932450653113678, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [524, 232, 90, 132], 'new': False, 'counted': False, 'ttc' : -1}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 5, 'speed': 7.883500926853487, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [377, 326, 68, 50], 'new': False, 'counted': True, 'ttc' : -1}, {'confidence': 0.61, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 8, 'speed': 6.006274599496227, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [424, 280, 41, 32], 'new': False, 'counted': False, 'ttc' : -1}], 'frame_index': 6348724}
+,{'objects': [{'confidence': 0.67, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 0, 'speed': 9.404605335094026, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 234, 92, 132], 'new': False, 'counted': False, 'ttc' : -1}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 6, 'speed': 7.46454395779037, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [376, 328, 68, 50], 'new': False, 'counted': True, 'ttc' : -1}, {'confidence': 0.61, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 9, 'speed': 5.687080068679144, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [424, 281, 41, 32], 'new': False, 'counted': False, 'ttc' : -1}], 'frame_index': 6348732}
+,{'objects': [{'confidence': 0.67, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 1, 'speed': 0.0, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 233, 91, 131], 'new': False, 'counted': False, 'ttc' : 2}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 7, 'speed': 6.193790879731843, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [374, 329, 68, 51], 'new': False, 'counted': True, 'ttc' : 3}, {'confidence': 0.77, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 0, 'speed': 18.3427258131377, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [414, 289, 49, 35], 'new': False, 'counted': False, 'ttc' : 2.5}], 'frame_index': 6348741})
 
 #create_vidio_info_table()
-dbl.add_rows_to_vidio_info(0, frames_info)
-print(dbl.serch_by_vidio_num_and_vidio_direction(1,0))
-print('*************************')
-dbl.delete_by_vidio_num_and_vidio_direction(1,0)
-print(dbl.serch_by_vidio_num_and_vidio_direction(1,0))
+#dbl.create_alert_info_table()
+#dbl.add_rows_to_alert_info_info ("aaa",0, frames_info)
+#print(dbl.serch_by_date_alert_info(datetime.strptime('2017-12-28', '%Y-%m-%d'),None))
+#print(dbl.serch_by_file_name_alert_info("aaa"))
+#dbl.delete_by_date_alert_info(datetime.strptime('2017-12-28', '%Y-%m-%d'),datetime.strptime('2018-12-28', '%Y-%m-%d'))
+print(dbl.serch_all_alert_info())
+#dbl.add_rows_to_vidio_info(0, frames_info)
+#print(dbl.serch_by_vidio_num_and_vidio_direction(1,0))
+#print('*************************')
+#dbl.delete_by_vidio_num_and_vidio_direction(1,0)
+#print(dbl.serch_by_vidio_num_and_vidio_direction(1,0))
