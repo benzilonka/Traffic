@@ -20,6 +20,16 @@ class Videos extends Component {
       videos: videos
     });
   }
+  hideFileModal = () => {
+    let videos = this.state.videos;
+    videos.map(function(video) {
+      video.showFilesModal = false;
+      return null;
+    });
+    this.setState({
+      videos: videos
+    });
+  }
   seekTo = index => {    
     this.refs.video0.seekTo(index);
     this.refs.video1.seekTo(index);
@@ -123,9 +133,9 @@ class Videos extends Component {
       </Container>
     );
 
-    let select_files_modals =  self.state.videos.map(function(video, index) {
+    let select_files_modals = self.state.videos.map(function(video, index) {
       return (
-        <Modal isOpen={self.state.videos[index].showFilesModal} className="FilesModal" key={'modal'+index} keyboard={true}>
+        <Modal isOpen={self.state.videos[index].showFilesModal} toggle={self.hideFileModal} className="FilesModal" key={'modal'+index} keyboard={true} backdrop={true}>
           <ModalHeader toggle={(e) => self.toggleFileModal(index)}>Select Files</ModalHeader>
           <ModalBody>
               <FormGroup className="inputRow">

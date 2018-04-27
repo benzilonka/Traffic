@@ -28,3 +28,29 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.nav-item, .navbar-brand, .navbar-toggler {
+  cursor: pointer;
+}
+
+.fade-in-enter {
+  opacity: 0.01;
+}
+
+.fade-in-enter.fade-in-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+}
+
+.fade-in-leave {
+  opacity: 1;
+}
+
+.fade-in-leave.fade-in-leave-active {
+  opacity: 0.01;
+  transition: opacity 300ms ease-in;
+}
+
+.btn {
+  cursor: pointer;
+}

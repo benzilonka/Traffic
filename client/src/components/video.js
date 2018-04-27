@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 import React, { Component } from 'react';
 import ReactPlayer from 'react-player';
 import '../styles/Videos.css';

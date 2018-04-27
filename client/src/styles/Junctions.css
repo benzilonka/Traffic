@@ -1,0 +1,29 @@
+#junctions {    
+    color: #222;
+    transition: visibility 0s, opacity 0.5s linear;
+}
+#junctions h1 {
+    font-size: 28px;
+    margin: 20px 0;
+}
+
+#junctions li {
+    cursor: pointer;
+}
+#junctions li:hover {
+    color: #333;
+    text-decoration: underline;
+}
+
+.input-panel {
+    padding: 20px 0px;
+}
+
+
+.btn {
+    margin: 3px;
+}
+
+.simulationsList li {
+    cursor: pointer;
+}

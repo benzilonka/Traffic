@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 import React, { Component } from 'react';
 import '../styles/Map.css';
 //import car_image from '../images/car.png';
@@ -15,14 +16,14 @@ class Vehicle extends Component {
         height: this.getVehicleDimensions(this.props.type).height + 'px'
     }
     let speed = null;
-    if(this.props.showSpeed) {
+    if(this.props.showSpeed && this.props.speed) {
       speed = (
         <span>speed: {this.props.speed.toFixed(2)} m/s</span>
       );
     }
     let ttc = null;
     if(this.props.showTTC) {
-      if(this.props.ttc > -1) {
+      if(this.props.ttc && this.props.ttc > -1) {
         ttc = (
           <span>ttc: {this.props.ttc.toFixed(2)} s</span>
         );
@@ -34,7 +35,7 @@ class Vehicle extends Component {
       }
     }
     let distance = null;
-    if(this.props.showDistance) {
+    if(this.props.showDistance && this.props.distance) {
       distance = (
         <span>dis: {this.props.distance.toFixed(2)} m</span>
       );
@@ -54,20 +55,16 @@ class Vehicle extends Component {
 
   getVehicleDimensions = type => {
     switch(type) {
-      case 'car':
-        return {
-          width: 8,
-          height: 8
-        };
       case 'bus':
-        return {
-          width: 12,
-          height: 12
-        };
+      return {
+        width: 10,
+        height: 10
+      };
+      case 'car':
       default:
         return {
-          width: 0,
-          height: 0
+          width: 6,
+          height: 6
         };
     }
   }

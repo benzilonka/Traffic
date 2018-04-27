@@ -1,17 +1,32 @@
+/*jshint esversion: 6 */
 import React, { Component } from 'react';
 import { Container, Row, Col, Button } from 'reactstrap';
 import { PlayButton, PauseButton, ProgressBar } from 'react-player-controls';
 import '../styles/Controls.css';
 import '../styles/video_controls.css';
 
+const FRAME_TIME = 0.066666666666;
+
 class Controls extends Component {
 
     render() {
         //console.log(this.props.played);
 
-        let playPause = <PlayButton isEnabled={true} onClick={this.props.playPause} />
+        let playPause = (
+            <PlayButton isEnabled={true} onClick={this.props.playPause} />
+        );
         if(this.props.playing) {
             playPause = <PauseButton type="button" onClick={this.props.playPause} />
+        }
+
+        let time_passed = 0;
+        try {
+            let date_time_passed = new Date(null);
+            date_time_passed.setSeconds(this.props.played * FRAME_TIME * 1000); // specify value for SECONDS here
+            time_passed = date_time_passed.toISOString().substr(11, 8);
+        }
+        catch(e) {
+            console.log(e);
         }
 
         return (
@@ -30,6 +45,7 @@ class Controls extends Component {
                                 onSeekStart={this.props.onSeekMouseDown}
                                 onSeekEnd={this.props.onSeekMouseUp}
                             />
+                            <small>{time_passed}</small>
                         </Col>
                         <Col xs={4}>
                             <Row>
