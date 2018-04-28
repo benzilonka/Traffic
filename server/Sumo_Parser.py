@@ -163,4 +163,4 @@ def get_simulation(duration, cars_per_second, max_speed):
     return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
 
 
-print(get_simulation(10, 0.5))
+#print(get_simulation(10, 0.5))
