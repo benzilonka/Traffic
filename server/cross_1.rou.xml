@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- generated on 2018-04-28 11:25:19.994000 by $Id$
+  options: -n cross_1.net.xml -o cross_1.rou.xml -e 10 -p 2.0 <doubleminus>speed-exponent -50.0
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <trip id="0" depart="0.00" from="53o" to="4o"/>
+    <trip id="1" depart="2.00" from="1o" to="4o"/>
+    <trip id="2" depart="4.00" from="51o" to="1o"/>
+    <trip id="3" depart="6.00" from="3o" to="3o"/>
+    <trip id="4" depart="8.00" from="1o" to="1o"/>
+</routes>
