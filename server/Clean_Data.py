@@ -1,5 +1,6 @@
 import json
 
+
 def get_array(param):
     ans = [[], []]
     for i in range(0, len(param[1])):
@@ -61,10 +62,11 @@ def clean(data):
             hash_vehicles[vehicle_id].append(coordinates)
             vehiclesSpeed[vehicle_id].append(vehicle['speed'])
 
-    #hash_vehicles = clean_routs(hash_vehicles)
+    # hash_vehicles = clean_routs(hash_vehicles)
     hash_vehicles, vehiclesSpeed = normalizeData(hash_vehicles, vehiclesSpeed)
     jsons = updateJson(jsons, hash_vehicles, vehiclesSpeed)
     return jsons
+
 
 def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
     # Pass through all the frames in order to update them
@@ -95,11 +97,12 @@ def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
 
     return json_to_ret
 
+
 def normalizeData(vehiclesPath, vehiclesSpeed):
     # Fix and handle locations of vehicles from given data
     for path in vehiclesPath:
         start_location = vehiclesPath[path][0]
-        end_location = vehiclesPath[path][len(vehiclesPath[path])-1]
+        end_location = vehiclesPath[path][len(vehiclesPath[path]) - 1]
 
         # First Stage:
         #   We'll check that every location is in the range in x axis and in y axis
@@ -135,37 +138,39 @@ def checkForLegalDifferSpeed(vehicleSpeedList):
     # Speeds in m/millisecond
     minSpeed = 0.0
     # 120 km/h -> 33.33333333333333 m/s ->  0.03333333333333 m/millisecond
-    maxSpeed = (120.0/3.6) / 1000
+    maxSpeed = (120.0 / 3.6) / 1000
     # Calculation is delta(velocity)/delta(time),
     # where delta(velocity) = maxSpeed-minSpeed and
     # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
     deltaVel = maxSpeed - minSpeed
     deltaTime = 66.66666666666667
-    maxAccelration = deltaVel/deltaTime
+    maxAccelration = deltaVel / deltaTime
     index = 0
-    while index < len(vehicleSpeedList)-1:
-        if vehicleSpeedList[index] < vehicleSpeedList[index+1]:
+    while index < len(vehicleSpeedList) - 1:
+        if vehicleSpeedList[index] < vehicleSpeedList[index + 1]:
             # if u + a*t < v (where u is velocity we begin with and t is the time passed till now)
-            if vehicleSpeedList[index] + maxAccelration*deltaTime < vehicleSpeedList[index+1]:
+            if vehicleSpeedList[index] + maxAccelration * deltaTime < vehicleSpeedList[index + 1]:
                 # Anomaly in speed and we'll fix it
-                vehicleSpeedList[index+1] = vehicleSpeedList[index] + maxAccelration*deltaTime
+                vehicleSpeedList[index + 1] = vehicleSpeedList[index] + maxAccelration * deltaTime
             # else speed is OK
-        else: # current speed is bigger than next speed
+        else:  # current speed is bigger than next speed
             # if u + a*t > v (where u is velocity we begin with and t is the time passed till now)
-            if vehicleSpeedList[index] - maxAccelration*deltaTime > vehicleSpeedList[index+1]:
-                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration*deltaTime
+            if vehicleSpeedList[index] - maxAccelration * deltaTime > vehicleSpeedList[index + 1]:
+                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration * deltaTime
             # else speed is OK
         index += 1
     return vehicleSpeedList
+
 
 def checkForLegalSpeedAndFit(currentSpeed):
     # max speed is in km/h
     maxSpeed = 120.0
     # max legal speed is in m/s
-    maxLegalSpeedPerSec = maxSpeed/3.6
+    maxLegalSpeedPerSec = maxSpeed / 3.6
     if currentSpeed > maxLegalSpeedPerSec:
         currentSpeed = maxLegalSpeedPerSec
     return currentSpeed
+
 
 def checkInRangeAndFit(start, end, currentLocation):
     # check x/y axis
@@ -184,6 +189,7 @@ def checkInRangeAndFit(start, end, currentLocation):
                 newLocation = end
     return newLocation
 
+
 def linearMovement(start, path):
     index = 1
     if len(path) < 2:
@@ -195,21 +201,22 @@ def linearMovement(start, path):
         # if not the last location in path
         if index != len(path) - 1:
             if directionX == "unknown":
-                directionX = checkForDirection(path[index], path[index+1], 0)
+                directionX = checkForDirection(path[index], path[index + 1], 0)
             if directionY == "unknown":
                 directionY = checkForDirection(path[index], path[index + 1], 1)
             # if isOK = True, move to the next index else 'fix' the location in index+1
-            isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
+            isOkX = checkIfLinear(path[index], path[index + 1], directionX, 0)
             if not isOkX:
-                path[index + 1][0] =  path[index][0]
-            isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
+                path[index + 1][0] = path[index][0]
+            isOkY = checkIfLinear(path[index], path[index + 1], directionY, 1)
             if not isOkY:
-                path[index + 1][1] =  path[index][1]
+                path[index + 1][1] = path[index][1]
             else:
                 index += 1
         else:
             index += 1
     return path
+
 
 def checkForDirection(locFrom, locTo, xORy):
     direction = "unknown"
@@ -220,13 +227,14 @@ def checkForDirection(locFrom, locTo, xORy):
     # else there is no difference between the locations
     return direction
 
+
 def checkIfLinear(locFrom, locTo, direction, xORy):
     ans = True
     if direction != "unknown":
         if direction == "up":
             if locFrom[xORy] > locTo[xORy]:
                 ans = False
-        else: # direction = down
+        else:  # direction = down
             if locTo[xORy] > locFrom[xORy]:
                 ans = False
     return ans
