@@ -6,7 +6,7 @@ from io import BytesIO
 import Parser
 import db_layer
 import storage_layer
-import Sumo_Paeser
+import Sumo_Parser
 
 db = db_layer.DB()
 storage = storage_layer.Storage()
@@ -41,7 +41,7 @@ def deleteJunction(data):
 
 def createSimulation(data):
     dataset_id = db.add_dataset(0, data['simulation'])
-    _jsons = Sumo_Paeser.get_simulation(data['simulation']['duration'], data['simulation']['cars_per_second'], data['simulation']['max_speed'])
+    _jsons = Sumo_Parser.get_simulation(data['simulation']['duration'], data['simulation']['cars_per_second'], data['simulation']['max_speed'])
     index = 0
     for _json in _jsons:
         storage.store_dataset_file(0, dataset_id, index, _json)

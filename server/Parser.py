@@ -1,12 +1,24 @@
+import json
+from typing import List
+
 import Clean_Data
 import Calibration_1
 import Data_Analysis
 
-RECT_WIDTH = 70
-RECT_HEIGHT = 700
+RECT_WIDTH = 35
+RECT_HEIGHT = 1320
+REACT_DIRECTION = 1
 PIXEL_PER_METER = 5
 MAX_TTC = 3
 LANE_WIDTH = 23
+
+
+def get_per_or_hor(fixed_frames):
+    pass
+
+
+def get_direction(fixed_frames, per_or_hor):
+    pass
 
 
 def fix_file(data, info):
@@ -20,9 +32,11 @@ def fix_file(data, info):
     transformation_matrix = Calibration_1.calibrate(info['tracking_params']['lanes'])
     for frame in frames:
         fixed_frame = Calibration_1.wrap(frame, transformation_matrix)
-        fixed_frame = Data_Analysis.addTTC(fixed_frame)
+        fixed_frame = Data_Analysis.add_pre_alerts(fixed_frame)
         fixed_frames.append(fixed_frame)
-
+    per_or_hor = get_per_or_hor(fixed_frames)
+    direction = get_direction(fixed_frames, per_or_hor)
+    Data_Analysis.add_post_alerts(fixed_frames, direction, per_or_hor)
     return fixed_frames
 
 
