@@ -1,8 +1,35 @@
 from datetime import datetime
 from dateutil.parser import parse
 import pandas as pd
-import pymysql.cursors
+import pymysql
+
+import os
+
 class DB_Layer(object):
+    
+
+   
+
+    def backup_database(self):
+        
+        DB_HOST = 'localhost'
+        DB_USER = 'project'
+        DB_PASSWD = '123456'
+        dbname = 'my_project'
+
+        # Driectory Path
+        DIRECTORY_BASE = "C:/shana4/python/backup/"
+
+        file_name = dbname + ".sql"
+
+        execute_command = "mysqldump -h%s -u%s -p%s %s > %s" %(DB_HOST, DB_USER, DB_PASSWD, dbname, DIRECTORY_BASE + '/' + file_name)
+
+        if os.system(execute_command) == 0:
+            print("%s backup is complete!" ,dbname)
+        else:
+            print("Sorry! %s is Backup Failed" ,dbname)
+
+
     def create_vidio_info_table (self):
     # Connect to the database
         connection = pymysql.connect(host='localhost',
@@ -85,7 +112,7 @@ class DB_Layer(object):
             # connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
-        
+            self.backup_database()
         finally:
             connection.close()
         return
@@ -112,7 +139,7 @@ class DB_Layer(object):
                 
             
                 result = cursor.fetchall()
-
+                
                 
         finally:
             connection.close()
@@ -190,7 +217,7 @@ class DB_Layer(object):
                 
             
                 connection.commit()
-
+                self.backup_database()
                 
         finally:
             connection.close()
@@ -248,6 +275,7 @@ class DB_Layer(object):
             # connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            self.backup_database()
         
         finally:
             connection.close()
@@ -306,6 +334,7 @@ class DB_Layer(object):
                 sql = "DELETE FROM `junction_info` WHERE `id`=%s"
                 cursor.execute(sql, (id))
                 connection.commit()
+                self.backup_database()
            
             
         finally:
@@ -334,6 +363,7 @@ class DB_Layer(object):
             # connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            self.backup_database()
         
         finally:
             connection.close()
@@ -363,6 +393,7 @@ class DB_Layer(object):
             # connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            self.backup_database()
         
         finally:
             connection.close()
@@ -399,6 +430,7 @@ class DB_Layer(object):
             # connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            self.backup_database()
         
         finally:
             connection.close()
@@ -474,13 +506,14 @@ class DB_Layer(object):
                 sql = "DELETE FROM `vidio_info` WHERE `id`=%s AND `vidio_direction`=%s"
                 cursor.execute(sql, (id, vidio_direction))
                 connection.commit()
+                self.backup_database()
            
             
         finally:
             connection.close()
         return 
 junction = {}
-junction['id'] = 6
+junction['id'] = 14
 junction['name'] = 'asdod 1'
 junction['lat'] = 31.789523
 junction['lng'] = 34.640348
@@ -493,11 +526,13 @@ feed2 = {}
 feed2['id'] = 2
 feed2['date'] = '2018/04/09 10:03'
 junction['feeds'].append(feed2)
-#add_row_to_junction_info(junction)
+
 dbl = DB_Layer()
+dbl.backup_database()
+#dbl.add_row_to_junction_info(junction)
 print(dbl.serch_by_id_junction_info(6))
 print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-dbl.add_vidio_num_to_junction(6,4,"10/10/2012")
+#dbl.add_vidio_num_to_junction(6,4,"10/10/2012")
 print(dbl.serch_by_id_junction_info(6))
 print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 junction['name'] = 'gal'
