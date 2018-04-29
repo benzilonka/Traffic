@@ -1,4 +1,5 @@
 import json
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
@@ -50,7 +51,6 @@ def clean(data):
         except ValueError:  # includes simplejson.decoder.JSONDecodeError
             pass
         objects = json_frame['objects']
-        #frameIndex = json_frame['frame_index']
         # Extract location and speed of each vehicle in the current frame
         for i in range(0, len(objects)):
             vehicle = objects[i]
@@ -62,7 +62,6 @@ def clean(data):
                 vehiclesSpeed[vehicle_id] = list()
             coordinates[0] = vehicle['bounding_box'][0]
             coordinates[1] = vehicle['bounding_box'][1]
-            #coordinates[2] = frameIndex
             hash_vehicles[vehicle_id].append(coordinates)
             vehiclesSpeed[vehicle_id].append(vehicle['speed'])
 
@@ -119,23 +118,24 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         #   We'll check(and fix if needed) that the vehicle movement is linear. Which means that if in x/y axis we start
         #   in high number and end in lower number, the numbers should be going down all the way or vice versa.
         vehiclesPath[path] = linearMovement(start_location, end_location, vehiclesPath[path])
+
         # Third Stage:
         #   Smooth the locations in current path
         vehiclesPath[path] = smoothData(vehiclesPath[path])
 
     # Fix and handle speeds of vehicles from given data
-    for vehicle in vehiclesSpeed:
+        #for vehicle in vehiclesSpeed:
         # Fourth Stage:
         #   We'll fix logically impossible high sampled speeds.
         index = 0
-        for speed in vehiclesSpeed[vehicle]:
+        for speed in vehiclesSpeed[path]:
             normalizedSpeed = checkForLegalSpeedAndFit(speed)
-            vehiclesSpeed[vehicle][index] = normalizedSpeed
+            vehiclesSpeed[path][index] = normalizedSpeed
             index += 1
-        """
+
         # Fifth Stage:
         #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
-        vehiclesSpeed[vehicle] = checkForLegalDifferSpeed(vehiclesSpeed[vehicle])"""
+        vehiclesSpeed[path] = checkForLegalDifferSpeed(vehiclesSpeed[path], vehiclesPath[path])
     return vehiclesPath, vehiclesSpeed
 
 def smoothData(path):
@@ -172,31 +172,21 @@ def smoothData(path):
         result.append([x_new[i], y_new[i]])
     return result
 
+# Calculate the distance between two locations using Pythagorean Theorem
+def calcDistance(startLocation, endLocation):
+    xDistance = abs(endLocation[0] - startLocation[0])
+    yDistance = abs(endLocation[1] - startLocation[1])
+    return math.sqrt(xDistance**2 + yDistance**2)
 
-def checkForLegalDifferSpeed(vehicleSpeedList):
-    # Speeds in m/millisecond
-    minSpeed = 0.0
-    # 120 km/h -> 33.33333333333333 m/s ->  0.03333333333333 m/millisecond
-    maxSpeed = (120.0/3.6) / 1000
-    # Calculation is delta(velocity)/delta(time),
-    # where delta(velocity) = maxSpeed-minSpeed and
+def checkForLegalDifferSpeed(vehicleSpeedList, vehiclePath):
     # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
-    deltaVel = maxSpeed - minSpeed
-    deltaTime = 66.66666666666667
-    maxAccelration = deltaVel/deltaTime
+    deltaTime = 1/15
     index = 0
-    while index < len(vehicleSpeedList)-1:
-        if vehicleSpeedList[index] < vehicleSpeedList[index+1]:
-            # if u + a*t < v (where u is velocity we begin with and t is the time passed till now)
-            if vehicleSpeedList[index] + maxAccelration*deltaTime < vehicleSpeedList[index+1]:
-                # Anomaly in speed and we'll fix it
-                vehicleSpeedList[index+1] = vehicleSpeedList[index] + maxAccelration*deltaTime
-            # else speed is OK
-        else: # current speed is bigger than next speed
-            # if u + a*t > v (where u is velocity we begin with and t is the time passed till now)
-            if vehicleSpeedList[index] - maxAccelration*deltaTime > vehicleSpeedList[index+1]:
-                vehicleSpeedList[index + 1] = vehicleSpeedList[index] - maxAccelration*deltaTime
-            # else speed is OK
+    while index < len(vehiclePath)-1:
+        distance = calcDistance(vehiclePath[index], vehiclePath[index+1])
+        suggestedVelocity = distance/deltaTime
+        fittedVelocity = checkForLegalSpeedAndFit(suggestedVelocity)
+        vehicleSpeedList[index] = fittedVelocity
         index += 1
     return vehicleSpeedList
 
@@ -229,7 +219,7 @@ def checkInRangeAndFit(start, end, currentLocation):
 def linearMovement(start, end, path):
     index = 1
     if len(path) < 2:
-        return
+        return path
     # check if the movement is from higher to lower numbers or vice versa
     directionX = checkForDirection(start, end, 0)
     directionY = checkForDirection(start, end, 1)
@@ -250,18 +240,13 @@ def linearMovement(start, end, path):
 def linearMovementHelper(directionX, directionY, path, index):
     # No need to change start and end locations
     while index < len(path)-1:
-        # if not the last location in path
-        """if directionX == "unknown":
-            directionX = checkForDirection(path[index], path[index+1], 0)
-        if directionY == "unknown":
-            directionY = checkForDirection(path[index], path[index + 1], 1)"""
         # if isOK = True, move to the next index else 'fix' the location in index+1
         isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
         if not isOkX:
-            path[index + 1][0] =  path[index][0]
+            path[index+1][0] =  path[index][0]
         isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
         if not isOkY:
-            path[index + 1][1] =  path[index][1]
+            path[index+1][1] =  path[index][1]
         index += 1
     return path
 
@@ -276,11 +261,10 @@ def checkForDirection(locFrom, locTo, xORy):
 
 def checkIfLinear(locFrom, locTo, direction, xORy):
     ans = True
-    if direction != "unknown":
-        if direction == "up":
-            if locFrom[xORy] > locTo[xORy]:
-                ans = False
-        else: # direction = down
-            if locTo[xORy] > locFrom[xORy]:
-                ans = False
+    if direction == "up":
+        if locFrom[xORy] > locTo[xORy]:
+            ans = False
+    else: # direction = down
+        if locTo[xORy] > locFrom[xORy]:
+            ans = False
     return ans
