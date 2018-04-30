@@ -9,6 +9,7 @@ import xml.etree.cElementTree as ET
 
 SUMO_DIRECTION = 1
 
+
 def add_traffic_light_status(frames, angle, traffic_timing):
     for direction in traffic_timing[angle]:
         param_list = traffic_timing[angle][direction]
@@ -22,6 +23,9 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
     out_jsons = [[], [], [], []]
     sumo_y_len = sumo_boundaries[0][1][1] - sumo_boundaries[0][1][0]
     lane_ratio = gui_boundaries[0][1] / sumo_y_len
+    prev_frames = {0: None, 90: None, 180: None, 270: None}
+    stop_line = 648
+    lanes = {"right": [55, 65], "forward": [45, 55], "left": [35, 45]}
     for step in time_step:
         frames = {0: {"frame_index": index, "light_status": {}, "objects": []},
                   90: {"frame_index": index, "light_status": {}, "objects": []},
@@ -30,16 +34,16 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         add_vehicles_to_frame(step, frames, gui_boundaries, sumo_boundaries)
         for angle in frames.keys():
             add_traffic_light_status(frames, angle, traffic_timing)
-        frames[0] = Data_Analysis.add_pre_alerts(frames[0], lane_ratio)
-        frames[90] = Data_Analysis.add_pre_alerts(frames[90], lane_ratio)
-        frames[180] = Data_Analysis.add_pre_alerts(frames[180], lane_ratio)
-        frames[270] = Data_Analysis.add_pre_alerts(frames[270], lane_ratio)
+        Data_Analysis.add_alerts(frames[0], prev_frames[0], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes)
+        Data_Analysis.add_alerts(frames[90], prev_frames[90], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes)
+        Data_Analysis.add_alerts(frames[180], prev_frames[180], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes)
+        Data_Analysis.add_alerts(frames[270], prev_frames[270], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes)
         out_jsons[0].append(frames[0])
         out_jsons[1].append(frames[90])
         out_jsons[2].append(frames[180])
         out_jsons[3].append(frames[270])
+        prev_frames = frames
         index += 1
-    add_post_alerts(out_jsons)
     return out_jsons
 
 
@@ -112,13 +116,6 @@ def get_light_from_time(n, total, start_g, end_g, end_y):
         return "red"
 
 
-def add_post_alerts(frames):
-    Data_Analysis.add_post_alerts(frames[0], SUMO_DIRECTION, 0)
-    Data_Analysis.add_post_alerts(frames[2], SUMO_DIRECTION, 0)
-    Data_Analysis.add_post_alerts(frames[1], SUMO_DIRECTION, 0)
-    Data_Analysis.add_post_alerts(frames[3], SUMO_DIRECTION, 0)
-
-
 def get_light_timing(net_file_name):
     file = minidom.parse(net_file_name)
     raw_input = file.getElementsByTagName('phase')
@@ -174,7 +171,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-# vehicle_info = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):
@@ -190,9 +187,13 @@ def get_simulation(duration, cars_per_second, vehicle_info):
     gui_coordinates = {0: [65, 1420], 180: [65, 1420], 90: [1420, 65], 270: [1420, 65]}
     p_value = str(1. / float(cars_per_second))
     sumoCmd = ['py', random_trips_path, "-n", "cross_1.net.xml", '-o', "cross_1.rou.xml",
-               "-e", str(duration), "-p", p_value, "--trip-attributes=type=\"myType\""]
+               "-e", str(duration), "-p", p_value, "--trip-attributes=type=\"myType\""
+               ]
     subprocess.call(sumoCmd)
     add_vehicle_types(vehicle_info, "cross_1.add.xml")
     sumoCmd = [sumo, "-c", "cross_1.sumocfg", "-e", str(duration), "--fcd-output", "cross_1_trace.xml"]
     subprocess.call(sumoCmd)
     return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
+
+
+get_simulation(100, 0.5, vehicle_info1)

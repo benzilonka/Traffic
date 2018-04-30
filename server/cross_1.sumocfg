@@ -2,9 +2,6 @@
     <input>
         <net-file value="cross_1.net.xml"/>
         <route-files value="cross_1.rou.xml"/>
+		<additional-files value="cross_1.add.xml"/>
     </input>
-    <time>
-        <begin value="0"/>
-        <end value="500"/>
-    </time>
 </configuration>

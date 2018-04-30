@@ -19,16 +19,19 @@ def fix_file(data, info):
     fixed_frames = []
     # need to fix and get the ratio from the data
     lane_ratio = 5
+    lane_stop = 650
+    lanes = {"right": [49, 60], "forward": [38, 49], "left": [27, 38]}
     for frame in jsons:
         if frame:
             frame = strip_json(frame)
             frames.append(frame)
     transformation_matrix = Calibration_1.calibrate(info['tracking_params']['lanes'])
+    prev_frame = None
     for frame in frames:
         fixed_frame = Calibration_1.wrap(frame, transformation_matrix)
-        fixed_frame = Data_Analysis.add_pre_alerts(fixed_frame, lane_ratio)
+        Data_Analysis.add_alerts(fixed_frame, prev_frame, lane_ratio, REACT_DIRECTION, 0, lane_stop, lanes)
         fixed_frames.append(fixed_frame)
-    Data_Analysis.add_post_alerts(fixed_frames, REACT_DIRECTION, 0)
+        prev_frame = fixed_frame
     return fixed_frames
 
 

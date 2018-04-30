@@ -1,70 +1,68 @@
 import Parser
 
 
-def add_pre_alerts(frame, lane_ratio):
-    return addTTC(frame, lane_ratio)
+def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes):
+    add_ttc(frame, lane_ratio)
+    add_zigzag_count(frame, prev_frame, direction, ver_or_hor)
+    is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes)
 
 
-def add_post_alerts(frames, direction, per_or_hor):
-    add_zigzag_count(frames, direction, per_or_hor)
-
-
-def addTTC(frame, lane_ratio):
+def add_ttc(frame, lane_ratio):
     vehicles = frame['objects']
     i = 0
     for vehicle in vehicles:
-        frame['objects'][i]['distance'] = getDistance(vehicle, vehicles)
-        frame['objects'][i]['ttc'] = calcTTC(vehicle, vehicles, lane_ratio)
+        frame['objects'][i]['distance'] = get_distance(vehicle, vehicles)
+        frame['objects'][i]['ttc'] = calc_ttc(vehicle, vehicles, lane_ratio)
         i = i + 1
     return frame
 
 
-def add_fields(frames):
-    for frame in frames:
-        vehicles = frame['objects']
-        for vehicle in vehicles:
-            vehicle["change_lane_count"] = 0
-            vehicle["against_direction_flag"] = False
+def add_fields(frame):
+    vehicles = frame['objects']
+    for vehicle in vehicles:
+        vehicle["change_lane_count"] = 0
+        vehicle["against_direction_flag"] = False
 
 
-def add_zigzag_count(frames, direction, per_or_hor):
-    add_fields(frames)
-    for i in range(1, len(frames)):
-        for current_vehicle in frames[i]['objects']:
-            for prev_vehicle in frames[i - 1]['objects']:
+def add_zigzag_count(frame, prev_frame, direction, per_or_hor):
+    add_fields(frame)
+    if prev_frame is not None:
+        for current_vehicle in frame['objects']:
+            for prev_vehicle in prev_frame['objects']:
                 if current_vehicle['tracking_id'] == prev_vehicle['tracking_id']:
                     current_vehicle["change_lane_count"] = prev_vehicle["change_lane_count"]
                     curr_pos = current_vehicle['bounding_box'][per_or_hor]
                     prev_pos = prev_vehicle['bounding_box'][per_or_hor]
                     if curr_pos != prev_pos:
                         current_vehicle["change_lane_count"] += 1
-                    curr_pos = current_vehicle['bounding_box'][1-per_or_hor]
-                    prev_pos = prev_vehicle['bounding_box'][1-per_or_hor]
+                    curr_pos = current_vehicle['bounding_box'][1 - per_or_hor]
+                    prev_pos = prev_vehicle['bounding_box'][1 - per_or_hor]
                     if curr_pos * direction < prev_pos * direction:
                         current_vehicle["against_direction_flag"] = True
+    return frame
 
 
-def calcTTC(vehicle, vehicles, lane_ratio):
+def calc_ttc(vehicle, vehicles, lane_ratio):
     if vehicle['speed'] == 0:
         return -1
     distance_and_speed = get_distance_and_speed(vehicle, vehicles)
     if distance_and_speed[0] <= 0:
         return -1
-    if vehicle['speed'] == 0 or vehicle['speed'] == distance_and_speed[1]:
+    if vehicle['speed'] == 0 or vehicle['speed'] <= distance_and_speed[1]:
         return -1
     else:
-        ttc = float(distance_and_speed[0] / ((distance_and_speed[1] * lane_ratio) - (vehicle['speed'] * lane_ratio)))
+        ttc = float(distance_and_speed[0] / ((vehicle['speed'] * lane_ratio) - (distance_and_speed[1] * lane_ratio)))
     if ttc > Parser.MAX_TTC:
         return -1
     return ttc
 
 
-def getDistance(vehicle, vehicles):
+def get_distance(vehicle, vehicles):
     y = Parser.RECT_HEIGHT
     for v in vehicles:
         if v['bounding_box'] != vehicle['bounding_box']:
-            if areInSameLane(vehicle['bounding_box'][0], v['bounding_box'][0]):
-                if y > v['bounding_box'][1] and vehicle['bounding_box'][1] < v['bounding_box'][1]:
+            if are_in_same_lane(vehicle['bounding_box'][0], v['bounding_box'][0]):
+                if y > v['bounding_box'][1] > vehicle['bounding_box'][1]:
                     y = v['bounding_box'][1]
     if y == Parser.RECT_HEIGHT:
         return 0
@@ -76,7 +74,7 @@ def get_distance_and_speed(vehicle, vehicles):
     speed = 0
     for v in vehicles:
         if v['bounding_box'] != vehicle['bounding_box']:
-            if areInSameLane(vehicle['bounding_box'][0], v['bounding_box'][0]):
+            if are_in_same_lane(vehicle['bounding_box'][0], v['bounding_box'][0]):
                 if y > v['bounding_box'][1] > vehicle['bounding_box'][1]:
                     y = v['bounding_box'][1]
                     speed = v['speed']
@@ -85,63 +83,44 @@ def get_distance_and_speed(vehicle, vehicles):
     return [(y - vehicle['bounding_box'][1]) / Parser.PIXEL_PER_METER, speed]
 
 
-def areInSameLane(x1, x2):
+def are_in_same_lane(x1, x2):
     return int(int(x1) / Parser.LANE_WIDTH) == int(int(x2) / Parser.LANE_WIDTH)
 
-# TODO: Need to add list of lanes as an argument
-def getVehicleLane(vehicle):
+
+def get_vehicle_lane(vehicle, lanes):
     lane = ""
     x_loc = vehicle['bounding_box'][0]
-    if 49 <= x_loc <= 60:
+    if lanes["right"][0] <= x_loc <= lanes["right"][1]:
         lane = "right"
-    elif 38 <= x_loc < 49:
+    elif lanes["forward"][0] <= x_loc < lanes["forward"][1]:
         lane = "forward"
-    elif 27 <= x_loc < 38:
+    elif lanes["left"][0] <= x_loc < lanes["left"][1]:
         lane = "left"
     return lane
 
-# TODO: Need to add list of lanes as an argument
-def isVehiclePassedInRedLight(frames, stopLine):
-    for frameIdx, frame in enumerate(frames):
-        vehicles = frame['objects']
-        for idx, current_vehicle in enumerate(vehicles):
-            vehicles[idx]['passedInRedLight'] = False
-            y_loc = current_vehicle['bounding_box'][1]
-            vehicleLane = getVehicleLane(current_vehicle)
-            if frame['light_status'][vehicleLane] == "red" and stopLine < y_loc:
-                # We don't have any info before the first frame and before there was data on the current vehicle
-                if frameIdx >= 1 and idx < len(frames[frameIdx-1]['objects']):
-                    # If in the frame before (~0.06 sec before) the light was red too and the vehicle located before
-                    # the stop line, then the vehicle passed in red light and we'll mark it
-                    prev_y_loc = frames[frameIdx-1]['objects'][idx]['bounding_box'][1]
-                    if frames[frameIdx-1]['light_status'][vehicleLane] == "red" and stopLine >= prev_y_loc:
-                        vehicles[idx]['passedInRedLight'] = True
-    return frames
+
+def is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes):
+    vehicles = frame['objects']
+    for idx, current_vehicle in enumerate(vehicles):
+        vehicles[idx]['passed_in_red'] = False
+        y_loc = current_vehicle['bounding_box'][1]
+        vehicleLane = get_vehicle_lane(current_vehicle, lanes)
+        if vehicleLane != "" and frame["light_status"][vehicleLane] == "red" and stop_line < y_loc:
+            # We don't have any info before the first frame and before there was data on the current vehicle
+            if prev_frame is not None and idx < len(prev_frame['objects']):
+                # If in the frame before (~0.06 sec before) the light was red too and the vehicle located before
+                # the stop line, then the vehicle passed in red light and we'll mark it
+                prev_y_loc = prev_frame['objects'][idx]['bounding_box'][1]
+                if prev_frame['light_status'][vehicleLane] == "red" and stop_line >= prev_y_loc:
+                    vehicles[idx]['passed_in_red'] = True
+    return frame
 
 
-def searchRedLight(frames):
+def search_red_light(frames):
     lst = []
     for idx, frame in enumerate(frames):
         vehicles = frame['objects']
         for current_vehicle in vehicles:
-            if current_vehicle['passedInRedLight'] == True:
+            if current_vehicle['passed_in_red']:
                 lst.append([idx, current_vehicle['tracking_id']])
     return lst
-
-
-
-"""frames = [{"frame_index": 0, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": []} \
-    ,{"frame_index": 1, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": []} \
-    ,{"frame_index": 2, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 0.0, "alert_tags": [], "bounding_box": [53.875, 737.55, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 1}]} \
-    ,{"frame_index": 3, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 2.54, "alert_tags": [], "bounding_box": [52.32500000000016, 749.5242857142857, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 1}]} \
-    ,{"frame_index": 4, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 4.37, "alert_tags": [], "bounding_box": [52.32500000000016, 770.1257142857144, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 1}, {"speed": 0.0, "alert_tags": [], "bounding_box": [53.875, 1296.9, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 2}]} \
-    ,{"frame_index": 5, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 6.65, "alert_tags": [], "bounding_box": [40.77499999999992, 801.522857142857, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 1}, {"speed": 1.63, "alert_tags": [], "bounding_box": [52.32500000000016, 1304.584285714286, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.250089", "tracking_id": 2}]} \
-    ,{"frame_index": 6, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 8.28, "alert_tags": [], "bounding_box": [40.77499999999992, 840.5571428571429, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.251089", "tracking_id": 1}, {"speed": 3.26, "alert_tags": [], "bounding_box": [40.77499999999992, 1319.9528571428573, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.251089", "tracking_id": 2}]} \
-    ,{"frame_index": 7, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 10.3, "alert_tags": [], "bounding_box": [40.77499999999992, 889.1142857142859, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.251089", "tracking_id": 1}]} \
-    ,{"frame_index": 8, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 9.97, "alert_tags": [], "bounding_box": [40.77499999999992, 936.1157142857143, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.251089", "tracking_id": 1}, {"speed": 0.0, "alert_tags": [], "bounding_box": [53.875, 24.0428571428572, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.252089", "tracking_id": 4}]} \
-    ,{"frame_index": 9, "light_status": {"right": "red", "forward": "red", "left": "red"}, "objects": [{"speed": 10.71, "alert_tags": [], "bounding_box": [40.77499999999992, 986.6057142857142, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.252089", "tracking_id": 1}, {"speed": 2.54, "alert_tags": [], "bounding_box": [53.875, 36.017142857142744, 0, 0], "confidence": 1.0, "times_lost_by_convnet": 0, "type": "DEFAULT_VEHTYPE", "created_at": "2018-04-29 18:01:26.252089", "tracking_id": 4}]}]
-
-frames = isVehiclePassedInRedLight(frames, 900)
-
-print(searchRedLight(frames))"""
-
