@@ -39,6 +39,22 @@ class Storage():
             print('storage get_dataset_files: Got error {!r}, errno is {}'.format(e, e.args[0]))
             return list()
 
+    def get_all_dataset_files(self, junction_id):
+        try:
+            path = '{0}/{1}'.format(STORAGE_DIRECTORY, junction_id)
+            if not os.path.exists(path):
+                return list()
+            res = list()
+            for dirname, dirs, files in os.walk(path):
+                for filename in files:
+                    with open(os.path.join(dirname, filename), 'r') as f:
+                        file_content = f.read()
+                        res.append([dirname.split("\\")[1], filename, json.loads(file_content)])
+            return res
+        except Exception as e:
+            print('storage get_dataset_files: Got error {!r}, errno is {}'.format(e, e.args[0]))
+            return list()
+
     def delete_junction(self, junction_id):
         try:
             shutil.rmtree('{0}/{1}'.format(STORAGE_DIRECTORY, junction_id))

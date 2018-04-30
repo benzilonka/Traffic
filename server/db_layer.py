@@ -1,13 +1,26 @@
 import pymysql
 import storage_layer
 
-DB_HOST='localhost'
-DB_USER='root'
-DB_PASSWORD='Yrtphe1820-='
-DB_NAME='traffic'
-DB_PORT=3306
-DB_CHARSET='utf8'
+DB_HOST = 'localhost'
+DB_USER = 'root'
+DB_PASSWORD = 'Yrtphe1820-='
+DB_NAME = 'traffic'
+DB_PORT = 3306
+DB_CHARSET = 'utf8'
 DB_TABLES = ['junctions', 'datasets', 'junctions_meta', 'datasets_meta']
+
+
+def search_data(junction_id, meta_key, meta_value):
+    storage = storage_layer.Storage()
+    detaset = storage.get_all_dataset_files(junction_id)
+    ans = []
+    for frames in detaset:
+        for frame in frames[2]:
+            for vehicle in frame["objects"]:
+                if vehicle[meta_key] == meta_value:
+                    ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+    return ans
+
 
 class DB():
 
@@ -15,17 +28,17 @@ class DB():
         self.connectToDB()
 
     def connectToDB(self):
-        error=False
+        error = False
         print('connecting to db..')
         try:
             self.dbcon = pymysql.connect(host=DB_HOST,
-                                        user=DB_USER,
-                                        password=DB_PASSWORD,
-                                        db=DB_NAME,
-                                        port=DB_PORT,
-                                        charset=DB_CHARSET,
-                                        autocommit=True,
-                                        cursorclass=pymysql.cursors.DictCursor)
+                                         user=DB_USER,
+                                         password=DB_PASSWORD,
+                                         db=DB_NAME,
+                                         port=DB_PORT,
+                                         charset=DB_CHARSET,
+                                         autocommit=True,
+                                         cursorclass=pymysql.cursors.DictCursor)
             print('success')
         except Exception as e:
             print('__init__: Got error {!r}, errno is {}'.format(e, e.args[0]))
@@ -46,9 +59,8 @@ class DB():
                 dbcur.execute(query)
             except Exception as e:
                 print('drop_all_tables: Got error {!r}, errno is {}'.format(e, e.args[0]))
-                if(e.args[0] == 2006):
+                if (e.args[0] == 2006):
                     self.connectToDB()
-
 
     def empty_all_tables(self):
         dbcur = self.dbcon.cursor()
@@ -61,12 +73,11 @@ class DB():
                 dbcur.execute(query)
             except Exception as e:
                 print('empty_all_tables: Got error {!r}, errno is {}'.format(e, e.args[0]))
-                if(e.args[0] == 2006):
+                if (e.args[0] == 2006):
                     self.connectToDB()
 
-
     def check_tables(self):
-        error=False
+        error = False
         for table in DB_TABLES:
             try:
                 print('checking if {0} table exists'.format(table))
@@ -77,11 +88,10 @@ class DB():
                     print('{0} table exists'.format(table))
             except Exception as e:
                 print('check_tables: Got error {!r}, errno is {}'.format(e, e.args[0]))
-                error=True
-                if(e.args[0] == 2006):
+                error = True
+                if (e.args[0] == 2006):
                     self.connectToDB()
         return error
-
 
     def check_table_exists(self, tablename):
         dbcur = self.dbcon.cursor()
@@ -96,21 +106,20 @@ class DB():
                 return True
         except Exception as e:
             print('check_table_exists: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
         return False
 
-
     def create_table(self, tablename):
-        if tablename == DB_TABLES[0]: #junctions
+        if tablename == DB_TABLES[0]:  # junctions
             query = """
                 CREATE TABLE {0} (id INT(8) UNSIGNED AUTO_INCREMENT PRIMARY KEY)
                 """
-        elif tablename == DB_TABLES[1]: #datasets
+        elif tablename == DB_TABLES[1]:  # datasets
             query = """
                 CREATE TABLE {0} (id INT(8) UNSIGNED AUTO_INCREMENT PRIMARY KEY, item_id INT(8) UNSIGNED)
                 """
-        else: #metas
+        else:  # metas
             query = """
                 CREATE TABLE {0} (id INT(8) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
                                   item_id INT(8) UNSIGNED, 
@@ -122,10 +131,8 @@ class DB():
             dbcur.execute(query.format(tablename))
         except Exception as e:
             print('create_table: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
-
-
 
     def add_junction(self, junction):
         dbcur = self.dbcon.cursor()
@@ -147,10 +154,9 @@ class DB():
             return junction_id
         except Exception as e:
             print('add_junction: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
             return False
-
 
     def get_junctions(self):
         dbcur = self.dbcon.cursor()
@@ -177,10 +183,9 @@ class DB():
                 junctions.append(junction)
         except Exception as e:
             print('get_junctions: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
         return junctions
-
 
     def delete_junction(self, junction_id):
         dbcur = self.dbcon.cursor()
@@ -189,19 +194,19 @@ class DB():
                         DELETE FROM {0}
                         WHERE id = {1}
                     """.format(DB_TABLES[0], junction_id)
-            dbcur.execute(query) #delete from junctions
+            dbcur.execute(query)  # delete from junctions
 
             query = """
                         DELETE FROM {0}
                         WHERE item_id = {1}
                     """.format(DB_TABLES[2], junction_id)
-            dbcur.execute(query) #delete from junctions_meta
+            dbcur.execute(query)  # delete from junctions_meta
 
             query = """
                         SELECT id FROM {0}
                         WHERE item_id = {1} 
                     """.format(DB_TABLES[1], junction_id)
-            dbcur.execute(query) #select datasets
+            dbcur.execute(query)  # select datasets
             datasets_rows = dbcur.fetchall()
             for row in datasets_rows:
                 dataset_id = row['id']
@@ -209,19 +214,18 @@ class DB():
                             DELETE FROM {0}
                             WHERE item_id = {1}
                         """.format(DB_TABLES[3], dataset_id)
-                dbcur.execute(query) #delete datasets metas
+                dbcur.execute(query)  # delete datasets metas
             query = """
                         DELETE FROM {0}
                         WHERE item_id = {1}
                     """.format(DB_TABLES[1], junction_id)
-            dbcur.execute(query) #delete datasets
+            dbcur.execute(query)  # delete datasets
             return True
         except Exception as e:
             print('delete_junction: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
             return False
-
 
     def get_datasets(self, junction_id):
         dbcur = self.dbcon.cursor()
@@ -248,10 +252,9 @@ class DB():
                 datasets.append(dataset)
         except Exception as e:
             print('get_datasets: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
         return datasets
-
 
     def add_dataset(self, junction_id, dataset):
         dbcur = self.dbcon.cursor()
@@ -273,10 +276,9 @@ class DB():
             return dataset_id
         except Exception as e:
             print('add_dataset: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
             return False
-
 
     def delete_dataset(self, dataset_id):
         dbcur = self.dbcon.cursor()
@@ -285,19 +287,52 @@ class DB():
                         DELETE FROM {0}
                         WHERE id = {1}
                     """.format(DB_TABLES[1], dataset_id)
-            dbcur.execute(query) #delete from datasets
+            dbcur.execute(query)  # delete from datasets
 
             query = """
                         DELETE FROM {0}
                         WHERE item_id = {1}
                     """.format(DB_TABLES[3], dataset_id)
-            dbcur.execute(query) #delete from datasets_meta
+            dbcur.execute(query)  # delete from datasets_meta
             return True
         except Exception as e:
             print('delete_junction: Got error {!r}, errno is {}'.format(e, e.args[0]))
-            if(e.args[0] == 2006):
+            if (e.args[0] == 2006):
                 self.connectToDB()
             return False
+
+    def search_data(self, junction_id, meta_key, min_meta_value, max_meta_value):
+        storage = storage_layer.Storage()
+        detaset = storage.get_all_dataset_files(junction_id)
+        ans = []
+        for frames in detaset:
+            for frame in frames[2]:
+                for vehicle in frame["objects"]:
+                    if min_meta_value <= vehicle[meta_key] <= max_meta_value:
+                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+        return ans
+
+    def search_data(self, junction_id, detaset_id, meta_key, meta_value):
+        storage = storage_layer.Storage()
+        deta_set = storage.get_dataset_files(junction_id, detaset_id)
+        ans = []
+        for frames in deta_set:
+            for frame in frames[2]:
+                for vehicle in frame["objects"]:
+                    if vehicle[meta_key] == meta_value:
+                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+        return ans
+
+    def search_data(self, junction_id, detaset_id, meta_key, min_meta_value, max_meta_value):
+        storage = storage_layer.Storage()
+        deta_set = storage.get_dataset_files(junction_id, detaset_id)
+        ans = []
+        for frames in deta_set:
+            for frame in frames[2]:
+                for vehicle in frame["objects"]:
+                    if min_meta_value <= vehicle[meta_key] <= max_meta_value:
+                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+        return ans
 
 
 '''
