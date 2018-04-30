@@ -18,9 +18,9 @@ class Simulation extends Component {
         this.state = {
             new_simulation: {
                 name: '',
-                duration: 0,
-                cars_per_second: 0,
-                max_speed: 0
+                duration: 60,
+                cars_per_second: 1,
+                vehicle_info: {"car": [70, 0.8, 2.6, 4.5, 2.5, 1, -1], "bus": [55, 0.2, 2.1, 4.3, 2.5, 1, -1]}
             }
         };
         this.props.getSimulations();
@@ -41,9 +41,16 @@ class Simulation extends Component {
             new_simulation: new_simulation
         });
     }
-    handleNewSimulationcars_per_secondChange = e => {
+    handleNewSimulationCarsPerSecondChange = e => {
         let new_simulation = this.state.new_simulation;
         new_simulation.cars_per_second = e.target.value;
+        this.setState({
+            new_simulation: new_simulation
+        });
+    }
+    handleNewSimulationVehicleInfoChange = (e, type, i) => {
+        let new_simulation = this.state.new_simulation;
+        new_simulation.vehicle_info[type][i] = e.target.value;
         this.setState({
             new_simulation: new_simulation
         });
@@ -109,12 +116,142 @@ class Simulation extends Component {
                                 />
                             </FormGroup>
                             <FormGroup>
-                                <Label>Number of vehicles per second:</Label>
+                                <Label>Cars per second:</Label>
                                 <Input 
-                                    type="text" 
-                                    placeholder={`Vehicles per second`}
+                                    type="number" 
+                                    placeholder={`Cars per second`}
                                     value={this.state.new_simulation.cars_per_second} 
-                                    onChange={(e) => this.handleNewSimulationcars_per_secondChange(e)} 
+                                    onChange={(e) => this.handleNewSimulationCarsPerSecondChange(e)} 
+                                />
+                            </FormGroup>
+                            
+                            <h3>Car policy:</h3>
+                            <FormGroup>
+                                <Label>Max speed:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Max speed`}
+                                    value={this.state.new_simulation.vehicle_info['car'][0]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 0)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Speed:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Speed`}
+                                    value={this.state.new_simulation.vehicle_info['car'][1]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 1)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Acceleration:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Acceleration`}
+                                    value={this.state.new_simulation.vehicle_info['car'][2]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 2)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Deceleration:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Deceleration`}
+                                    value={this.state.new_simulation.vehicle_info['car'][3]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 3)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Minimum gap between cars:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Minimum gap between cars`}
+                                    value={this.state.new_simulation.vehicle_info['car'][4]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 4)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Lane change policy (1-inf):</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Lane change policy (1-inf):`}
+                                    value={this.state.new_simulation.vehicle_info['car'][5]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 5)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Make red crossing optional (-1 to 0):</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Make red crossing optional (-1 to 0)`}
+                                    value={this.state.new_simulation.vehicle_info['car'][6]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'car', 6)} 
+                                />
+                            </FormGroup>
+
+                            <h3>Bus policy:</h3>
+                            <FormGroup>
+                                <Label>Max speed:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Max speed`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][0]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 0)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Speed:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Speed`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][1]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 1)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Acceleration:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Acceleration`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][2]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 2)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Deceleration:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Deceleration`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][3]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 3)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Minimum gap between cars:</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Minimum gap between cars`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][4]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 4)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Lane change policy (1-inf):</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Lane change policy (1-inf):`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][5]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 5)} 
+                                />
+                            </FormGroup>
+                            <FormGroup>
+                                <Label>Make red crossing optional (-1 to 0):</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder={`Make red crossing optional (-1 to 0)`}
+                                    value={this.state.new_simulation.vehicle_info['bus'][6]} 
+                                    onChange={(e) => this.handleNewSimulationVehicleInfoChange(e, 'bus', 6)} 
                                 />
                             </FormGroup>
                             <Button color="success" onClick={(e) => this.createSimulation()}>Create</Button>
@@ -124,6 +261,6 @@ class Simulation extends Component {
             </Container>
         );
     }
-}
+}//max speed, sigma, acceleration, deceleration, minimum gap between cars,# lane change policy (1-inf), make red crossing optional (-1 to 0)
 
 export default Simulation;

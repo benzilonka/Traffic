@@ -202,6 +202,15 @@ class Junctions extends Component {
                             value={this.state.new_junction.name} 
                             onChange={(e) => this.handleNewJunctionNameChange(e)} 
                         />
+                    </FormGroup>                    
+                    <FormGroup>
+                        <Label>Latitude:</Label>
+                        <Input 
+                            type="number" 
+                            placeholder={`Junction Latitude`}
+                            value={this.state.new_junction.lat} 
+                            onChange={(e) => this.handleNewJunctionLatitudeChange(e)} 
+                        />
                     </FormGroup>
                     <FormGroup>
                         <Label>Longitude:</Label>
@@ -210,15 +219,6 @@ class Junctions extends Component {
                             placeholder={`Junction Longitude`}
                             value={this.state.new_junction.lon}
                             onChange={(e) => this.handleNewJunctionLongitudeChange(e)} 
-                        />
-                    </FormGroup>
-                    <FormGroup>
-                        <Label>Latitude:</Label>
-                        <Input 
-                            type="number" 
-                            placeholder={`Junction Latitude`}
-                            value={this.state.new_junction.lat} 
-                            onChange={(e) => this.handleNewJunctionLatitudeChange(e)} 
                         />
                     </FormGroup>
                     <Button color="success" onClick={(e) => this.addJunction(this.init_map)}>Create</Button>

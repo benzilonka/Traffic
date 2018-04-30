@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 import React, { Component } from 'react';
 import { Input, Label, FormGroup, Button, Modal, ModalHeader, ModalBody, ModalFooter, Container, Row, Col } from 'reactstrap';
 import Video from './video.js';
@@ -76,7 +77,7 @@ class Videos extends Component {
     }
   }
 
-  finishLoadingFiles = (i) => {
+  finishLoadingFiles = i => {
     let json = this.state.temp_files[i].json;
     let meta = this.state.temp_files[i].meta;
     if(json == null || meta == null) {
@@ -89,9 +90,9 @@ class Videos extends Component {
       this.setState({
         temp_files: temp_files
       });
-
-      this.toggleFileModal(i);
     }
+
+    this.toggleFileModal(i);
   }
 
 

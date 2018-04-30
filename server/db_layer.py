@@ -1,5 +1,6 @@
 import pymysql
 import storage_layer
+import json
 
 DB_HOST='localhost'
 DB_USER='root'
@@ -115,7 +116,7 @@ class DB():
                 CREATE TABLE {0} (id INT(8) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
                                   item_id INT(8) UNSIGNED, 
                                   meta_key varchar(32), 
-                                  meta_value varchar(50))
+                                  meta_value varchar(150))
                 """
         try:
             dbcur = self.dbcon.cursor()
@@ -244,7 +245,7 @@ class DB():
                 dbcur.execute(query)
                 metas_rows = dbcur.fetchall()
                 for meta_row in metas_rows:
-                    dataset[meta_row['meta_key']] = meta_row['meta_value']
+                    dataset[meta_row['meta_key']] = json.loads(meta_row['meta_value'])
                 datasets.append(dataset)
         except Exception as e:
             print('get_datasets: Got error {!r}, errno is {}'.format(e, e.args[0]))
@@ -268,7 +269,7 @@ class DB():
                             (item_id, meta_key, meta_value)
                             VALUES
                             ({1}, '{2}', '{3}')
-                        """.format(DB_TABLES[3], dataset_id, key, dataset[key])
+                        """.format(DB_TABLES[3], dataset_id, key, json.dumps(dataset[key]))
                 dbcur.execute(query)
             return dataset_id
         except Exception as e:

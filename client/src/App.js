@@ -57,14 +57,6 @@ class App extends Component {
     this.getJunctions(function() {});
   }
 
-  resetPlayback = () => {
-    this.setState({
-      playing: false,
-      played: 0,
-      currentFrame: 0
-    });
-  };
-
   toggleShowSpeed = () => {
     this.setState({
       showSpeed: !this.state.showSpeed
@@ -89,7 +81,7 @@ class App extends Component {
       var timeout = FRAME_TIME * this.state.playbackRate;
       let self = this;
       var playFrame = function() {
-        if(self.state.playing) {
+        if(self.state.playing && self.state.currentFrame < self.state.numOfFrames) {
           let played = self.state.currentFrame + 1;
           played /= self.state.numOfFrames;
           self.setState({
@@ -98,6 +90,8 @@ class App extends Component {
           });
           timeout = FRAME_TIME / self.state.playbackRate;
           setTimeout(playFrame, timeout * SECOND);
+        } else {
+          self.onEnded();
         }
       };
       setTimeout(playFrame, timeout);
@@ -108,6 +102,7 @@ class App extends Component {
   onEnded = () => {
     this.setState({ 
       playing: false,
+      played: 0,
       currentFrame: 0
     });    
   };
@@ -181,7 +176,7 @@ class App extends Component {
           numOfFrames: size,
           loading: false
         });
-        self.resetPlayback();
+        self.onEnded();
       }
       catch(e) {
         console.log(e);
@@ -262,6 +257,10 @@ class App extends Component {
   };
 
   getDatasetFiles = dataset_id => {
+    this.setState({
+      frames: [null, null, null, null],
+      urls: [null, null, null, null]
+    });
     let self = this;
     axios.post(SERVER_URL, {
       route: 'getDatasetFiles',
@@ -296,7 +295,7 @@ class App extends Component {
           loading: false,
           selectedJunction: selectedJunction
         });
-        self.resetPlayback();
+        self.onEnded();
         self.goToTab(TABS.main);
       }
       catch(e) {
@@ -357,7 +356,7 @@ class App extends Component {
     });
   };
 
-  createSimulation = (simulation) => {
+  createSimulation = simulation => {
     let self = this;
     axios.post(SERVER_URL, {
       route: 'createSimulation',
@@ -396,6 +395,7 @@ class App extends Component {
   };
 
   goToTab = tab_index => {
+    this.onEnded();
     this.setState({
       tab: tab_index,
       isMenuOpen: false
