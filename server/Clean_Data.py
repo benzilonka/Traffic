@@ -125,7 +125,6 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         vehiclesPath[path] = smoothData(vehiclesPath[path])
 
     # Fix and handle speeds of vehicles from given data
-        #for vehicle in vehiclesSpeed:
         # Fourth Stage:
         #   We'll fix logically impossible high sampled speeds.
         index = 0
