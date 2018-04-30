@@ -41,7 +41,7 @@ def deleteJunction(data):
 
 def createSimulation(data):
     dataset_id = db.add_dataset(0, data['simulation'])
-    _jsons = Sumo_Parser.get_simulation(data['simulation']['duration'], data['simulation']['cars_per_second'], data['simulation']['max_speed'])
+    _jsons = Sumo_Parser.get_simulation(data['simulation']['duration'], data['simulation']['cars_per_second'], data['simulation']['vehicle_info'])
     index = 0
     for _json in _jsons:
         storage.store_dataset_file(0, dataset_id, index, _json)

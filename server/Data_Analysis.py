@@ -1,10 +1,11 @@
 import Parser
 
 
-def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes):
+def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes, sumo_flag):
     add_ttc(frame, lane_ratio)
     add_zigzag_count(frame, prev_frame, direction, ver_or_hor)
-    is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes)
+    if sumo_flag:
+        is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes)
 
 
 def add_ttc(frame, lane_ratio):
