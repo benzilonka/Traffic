@@ -1,9 +1,13 @@
 import os
 import sys
 import subprocess
+import Data_Analysis
+
 from datetime import datetime
 from xml.dom import minidom
+import xml.etree.cElementTree as ET
 
+SUMO_DIRECTION = 1
 
 def add_traffic_light_status(frames, angle, traffic_timing):
     for direction in traffic_timing[angle]:
@@ -16,6 +20,8 @@ def add_traffic_light_status(frames, angle, traffic_timing):
 def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
     index = 0
     out_jsons = [[], [], [], []]
+    sumo_y_len = sumo_boundaries[0][1][1] - sumo_boundaries[0][1][0]
+    lane_ratio = gui_boundaries[0][1] / sumo_y_len
     for step in time_step:
         frames = {0: {"frame_index": index, "light_status": {}, "objects": []},
                   90: {"frame_index": index, "light_status": {}, "objects": []},
@@ -24,11 +30,16 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         add_vehicles_to_frame(step, frames, gui_boundaries, sumo_boundaries)
         for angle in frames.keys():
             add_traffic_light_status(frames, angle, traffic_timing)
+        frames[0] = Data_Analysis.add_pre_alerts(frames[0], lane_ratio)
+        frames[90] = Data_Analysis.add_pre_alerts(frames[90], lane_ratio)
+        frames[180] = Data_Analysis.add_pre_alerts(frames[180], lane_ratio)
+        frames[270] = Data_Analysis.add_pre_alerts(frames[270], lane_ratio)
         out_jsons[0].append(frames[0])
         out_jsons[1].append(frames[90])
         out_jsons[2].append(frames[180])
         out_jsons[3].append(frames[270])
         index += 1
+    add_post_alerts(out_jsons)
     return out_jsons
 
 
@@ -101,6 +112,13 @@ def get_light_from_time(n, total, start_g, end_g, end_y):
         return "red"
 
 
+def add_post_alerts(frames):
+    Data_Analysis.add_post_alerts(frames[0], SUMO_DIRECTION, 0)
+    Data_Analysis.add_post_alerts(frames[2], SUMO_DIRECTION, 0)
+    Data_Analysis.add_post_alerts(frames[1], SUMO_DIRECTION, 0)
+    Data_Analysis.add_post_alerts(frames[3], SUMO_DIRECTION, 0)
+
+
 def get_light_timing(net_file_name):
     file = minidom.parse(net_file_name)
     raw_input = file.getElementsByTagName('phase')
@@ -141,7 +159,25 @@ def sumo_parse(in_file_name, net_file_name, gui_boundaries, sumo_boundaries):
     return jsons_ans
 
 
-def get_simulation(duration, cars_per_second, max_speed):
+def add_vehicle_types(vehicle_info, file_name):
+    root = ET.Element("additional")
+    v_type_element = ET.SubElement(root, "vTypeDistribution", id="myType")
+    for v_type in vehicle_info.keys():
+        ET.SubElement(v_type_element, "vType", id=v_type, maxSpeed=str(vehicle_info[v_type][0]),
+                      sigma=str(vehicle_info[v_type][1]), accel=str(vehicle_info[v_type][2]),
+                      decel=str(vehicle_info[v_type][3]), minGap=str(vehicle_info[v_type][4]),
+                      lcStrategic=str(vehicle_info[v_type][5]), jmDriveAfterRedTime=str(vehicle_info[v_type][6]))
+    tree = ET.ElementTree(root)
+    tree.write(file_name)
+
+
+# vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
+# lane change policy (1-inf), make red crossing optional (-1 to 0)
+# for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
+# vehicle_info = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+
+# fix: the configuration file need to be defined in here from scratch
+def get_simulation(duration, cars_per_second, vehicle_info):
     if 'SUMO_HOME' in os.environ:
         sumo = os.path.join(os.environ['SUMO_HOME'], 'bin', 'sumo.exe')
         tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -151,16 +187,12 @@ def get_simulation(duration, cars_per_second, max_speed):
         sys.exit("please declare environment variable 'SUMO_HOME'")
     sumo_coordinates = {0: [[500., 520.], [370, 650]], 90: [[370, 650], [500., 520.]],
                         180: [[500., 520.], [370, 650]], 270: [[370, 650], [500., 520.]]}
-    gui_coordinates = {0: [70, 1320], 180: [70, 1320], 90: [1320, 70], 270: [1320, 70]}
-    p_value = str(1 / cars_per_second)
-    trip_attributes = "--trip-attributes=departSpeed=" + str(max_speed)
-    print(trip_attributes)
+    gui_coordinates = {0: [65, 1420], 180: [65, 1420], 90: [1420, 65], 270: [1420, 65]}
+    p_value = str(1. / float(cars_per_second))
     sumoCmd = ['py', random_trips_path, "-n", "cross_1.net.xml", '-o', "cross_1.rou.xml",
-               "-e", str(duration), "-p", p_value, "--speed-exponent", str(max_speed)]
+               "-e", str(duration), "-p", p_value, "--trip-attributes=type=\"myType\""]
     subprocess.call(sumoCmd)
+    add_vehicle_types(vehicle_info, "cross_1.add.xml")
     sumoCmd = [sumo, "-c", "cross_1.sumocfg", "-e", str(duration), "--fcd-output", "cross_1_trace.xml"]
     subprocess.call(sumoCmd)
     return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
-
-
-print(get_simulation(10, 0.5, 0))

@@ -404,7 +404,7 @@ def frame_time_lapse(current_frame, lanes_array, lane_dimensions, light, acciden
     for car_info in current_frame['objects']:
         car_lane = get_car_lane(car_info, lanes_array)
         car_new_position = get_new_position(car_info, car_lane, lane_dimensions)
-        car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light, red_crossing_rate,
+        car_info['speed'] = adjust_speed_to_traffic(car_info, current_frame, light,
                                                     accident_rate, ratio, car_new_position)
         car_info['bounding_box'][1] = car_new_position
         if not is_car_finished(car_info, lanes_array):

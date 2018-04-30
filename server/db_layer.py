@@ -13,7 +13,7 @@ class DB():
 
     def __init__(self):
         self.connectToDB()
-    
+
     def connectToDB(self):
         error=False
         print('connecting to db..')
@@ -99,10 +99,10 @@ class DB():
             if(e.args[0] == 2006):
                 self.connectToDB()
         return False
-    
+
 
     def create_table(self, tablename):
-        if tablename == DB_TABLES[0]: #junctions 
+        if tablename == DB_TABLES[0]: #junctions
             query = """
                 CREATE TABLE {0} (id INT(8) UNSIGNED AUTO_INCREMENT PRIMARY KEY)
                 """
@@ -134,7 +134,7 @@ class DB():
                         INSERT INTO {0}
                         () VALUES ()
                     """.format(DB_TABLES[0])
-            dbcur.execute(query)            
+            dbcur.execute(query)
             junction_id = dbcur.lastrowid
             for key in junction:
                 query = """
@@ -247,7 +247,7 @@ class DB():
                     dataset[meta_row['meta_key']] = meta_row['meta_value']
                 datasets.append(dataset)
         except Exception as e:
-            print('get_datasets: Got error {!r}, errno is {}'.format(e, e.args[0]))            
+            print('get_datasets: Got error {!r}, errno is {}'.format(e, e.args[0]))
             if(e.args[0] == 2006):
                 self.connectToDB()
         return datasets
@@ -260,7 +260,7 @@ class DB():
                         INSERT INTO {0}
                         (item_id) VALUES ({1})
                     """.format(DB_TABLES[1], junction_id)
-            dbcur.execute(query)            
+            dbcur.execute(query)
             dataset_id = dbcur.lastrowid
             for key in dataset:
                 query = """
