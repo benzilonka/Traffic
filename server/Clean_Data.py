@@ -144,33 +144,37 @@ def smoothData(path):
     threshold = 15
     polynomialDeg = 4
 
-    # get x and y vectors
-    x = points[:, 0]
-    y = points[:, 1]
-    # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
-    if numOfPoints > threshold:
-        numOfPoints = int(numOfPoints/2)
-    # this param in savgol_filter has to be a positive odd number
-    if numOfPoints % 2 == 0:
-        numOfPoints -= 1
+    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter method
+    if numOfPoints > polynomialDeg:
+        # get x and y vectors
+        x = points[:, 0]
+        y = points[:, 1]
+        # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
+        if numOfPoints > threshold:
+            numOfPoints = int(numOfPoints/2)
+        # this param in savgol_filter has to be a positive odd number
+        if numOfPoints % 2 == 0:
+            numOfPoints -= 1
 
-    # smooth the path using Savitzky–Golay filter using 4th degree polynomial
-    x_new = savgol_filter(x, numOfPoints, polynomialDeg)
-    y_new = savgol_filter(y, numOfPoints, polynomialDeg)
+        # smooth the path using Savitzky–Golay filter using 4th degree polynomial
+        x_new = savgol_filter(x, numOfPoints, polynomialDeg)
+        y_new = savgol_filter(y, numOfPoints, polynomialDeg)
 
-    """plt.subplot(211)
-    plt.plot(x, 'o', x_new)
-    plt.title('Polynomial Fit X with Matplotlib')
-
-    plt.subplot(212)
-    plt.plot(y, 'o', y_new)
-    plt.title('Polynomial Fit Y with Matplotlib')
-
-    plt.show()"""
-    result = []
-    for i in range(0, len(x_new)):
-        result.append([x_new[i], y_new[i]])
-    return result
+        """plt.subplot(211)
+        plt.plot(x, 'o', x_new)
+        plt.title('Polynomial Fit X with Matplotlib')
+    
+        plt.subplot(212)
+        plt.plot(y, 'o', y_new)
+        plt.title('Polynomial Fit Y with Matplotlib')
+    
+        plt.show()"""
+        result = []
+        for i in range(0, len(x_new)):
+            result.append([x_new[i], y_new[i]])
+        return result
+    else:
+        return path
 
 # Calculate the distance between two locations using Pythagorean Theorem
 def calcDistance(startLocation, endLocation):
