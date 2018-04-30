@@ -77,20 +77,18 @@ class TrafficServer(BaseHTTPRequestHandler):
     def do_POST(self):    
         try:
             print("in post method")
-
             self.data_string = self.rfile.read(int(self.headers['Content-Length']))
             data = json.loads(self.data_string)
             func = ROUTES.get(data['route'], 'unknown_route')
             response = func(data)
             response_str = json.dumps(response)
-
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.send_header("Access-Control-Allow-Origin", "*");
             self.send_header("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
             self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
             self.end_headers()
-            self.wfile.write(response_str.encode())            
+            self.wfile.write(response_str.encode())
         except IOError:
             print('404')
             self.send_error(404, 'file not found')
