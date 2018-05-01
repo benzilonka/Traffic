@@ -107,9 +107,9 @@ class TestCleanData (unittest.TestCase):
         spead_list[111] =  [1,2,3,4]
         spead_list[222] =  [1,2,3,4]
         spead_list[333] =  [1,2,3,4]
-        vehiclesPath_result[111] = [[2,3],[3,4],[3.3,4.4], [5,5],[6,6]] 
-        vehiclesPath_result[222] = [[7,7.7],[6.3,7.1],[5,5], [4.4,4.1],[3,4]]
-        vehiclesPath_result[333] = [[2,3],[3,4],[3,4.4], [5,4.4],[6,6]]
+        vehiclesPath_result[111] = [[2,3],[3.3,4],[3.3,4.4], [6,5],[6,6]] 
+        vehiclesPath_result[222] = [[100,70.7],[6.3,7.2],[5,6], [4.4,4.1],[3.3,4]]
+        vehiclesPath_result[333] = [[2,3],[3,4],[3,4.1], [5,4.4],[120.5,30]]
         ans_spead[111] = Clean_Data.checkForLegalDifferSpeed(spead_list[111],vehiclesPath_result[111])
         ans_spead[222] = Clean_Data.checkForLegalDifferSpeed(spead_list[222],vehiclesPath_result[222])
         ans_spead[333] = Clean_Data.checkForLegalDifferSpeed(spead_list[333],vehiclesPath_result[333])
