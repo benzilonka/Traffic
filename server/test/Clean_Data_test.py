@@ -87,6 +87,11 @@ class TestCleanData (unittest.TestCase):
         path = [[7,7.7],[6.3,7.7],[5,7.6], [4.4,4.1],[5.1,4]]
         result_path = [[7,7.7],[6.3,7.7],[5,7.6], [4.4,4.1],[4.4,4]]
         self.assertEqual( Clean_Data.linearMovement(start,end,path),result_path)
+        start = [7,7.7]
+        end = [4.4,4]
+        path = [[7,7.7],[6.3,8],[5,7.7], [4.4,4.1],[5.1,4]]
+        result_path = [[7,7.7],[6.3,8],[5,7.7], [4.4,4.1],[4.4,4]]
+        self.assertEqual( Clean_Data.linearMovement(start,end,path),result_path)
         start = [2,3]
         end = [2,3]
         path = [[2,3],[2,3],[2,3],[2,3],[2,3]]
@@ -98,6 +103,20 @@ class TestCleanData (unittest.TestCase):
         result_path = [[7,7.7]]
         self.assertEqual( Clean_Data.linearMovement(start,end,path),result_path)
     
+    def test_linearMovementHelper(self):
+        vehiclesPath = [[2,3],[4,5],[3,6],[5,5],[4,4]]        
+        vehiclesPath_result = [[2,3],[4,5],[4,6],[5,6],[5,6]]
+        result = Clean_Data.linearMovementHelper('up','up',vehiclesPath,0)
+        for i in range(1,len(vehiclesPath)-1):
+            result = Clean_Data.linearMovementHelper('up','up',result,0)
+        self.assertEqual( result,vehiclesPath_result)
+        vehiclesPath = [[7,6],[6,5],[7,4.5],[5,7],[7,8]]
+        vehiclesPath_result = [[7,6],[6,5],[6,4.5],[5,4.5],[5,4.5]]
+        result = Clean_Data.linearMovementHelper('douwn','douwn',vehiclesPath,0)
+        for i in range(1,len(vehiclesPath)-1):
+            result = Clean_Data.linearMovementHelper('douwn','douwn',result,0)
+        self.assertEqual( result,vehiclesPath_result)
+        
     def test_checkForLegalDifferSpeed(self):
         spead_list = {}
         vehiclesPath_result = {}
