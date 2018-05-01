@@ -29,8 +29,7 @@ class Junctions extends Component {
             show_create_junction_panel: false,
             show_add_dataset_panel: false
         };
-        this.init_map();        
-        this.props.selectJunction();
+        this.init_map();
     }
 
     init_map = () => {

@@ -51,6 +51,18 @@ def createSimulation(data):
 def getSimulations(data):
     return db.get_datasets(0)
 
+def searchData(data):
+    if 'meta_value' in data:        
+        if 'dataset_id' in data:
+            return db.search_data_equal_with_dataset(data['junction_id'], data['dataset_id'], data['meta_key'], float(data['meta_value']))
+        else:
+            return db.search_data_equal(data['junction_id'], data['meta_key'], float(data['meta_value']))
+    else:
+        if 'dataset_id' in data:
+            return db.search_data_min_max_with_dataset(data['junction_id'], data['dataset_id'], data['meta_key'], float(data['min_meta_value']), float(data['max_meta_value']))
+        else:
+            return db.search_data_min_max(data['junction_id'], data['meta_key'], float(data['min_meta_value']), float(data['max_meta_value']))
+    
 
 ROUTES = { 
     'getFrames': getFrames,
@@ -62,7 +74,8 @@ ROUTES = {
     'addDatasetFile': addDatasetFile,
     'deleteJunction': deleteJunction,
     'createSimulation': createSimulation,
-    'getSimulations': getSimulations
+    'getSimulations': getSimulations,
+    'searchData': searchData
 }
 
 class TrafficServer(BaseHTTPRequestHandler):

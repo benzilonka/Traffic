@@ -64,4 +64,21 @@
 .vehicle-label {
     width: 320px;
     overflow: visible;
+    margin: 5px;
+}
+
+.traffic-light {
+    position: absolute;
+    top: 44%;
+    left: 8px;
+    width: 100%;
+    height: 15px;
+}
+
+.traffic-light div {
+    display: inline-block;
+    height: 5px;
+    width: 5px;
+    margin: 1px;
+    border-radius: 50%;
 }

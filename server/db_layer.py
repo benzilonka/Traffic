@@ -10,12 +10,14 @@ DB_PORT = 3306
 DB_CHARSET = 'utf8'
 DB_TABLES = ['junctions', 'datasets', 'junctions_meta', 'datasets_meta']
 
+FRAMES_JUMPS_ON_SEARCH = 16
+
 
 def search_data(junction_id, meta_key, meta_value):
     storage = storage_layer.Storage()
-    detaset = storage.get_all_dataset_files(junction_id)
+    dataset = storage.get_all_dataset_files(junction_id)
     ans = []
-    for frames in detaset:
+    for frames in dataset:
         for frame in frames[2]:
             for vehicle in frame["objects"]:
                 if vehicle[meta_key] == meta_value:
@@ -302,37 +304,92 @@ class DB():
                 self.connectToDB()
             return False
 
-    def search_data(self, junction_id, meta_key, min_meta_value, max_meta_value):
+    def search_data_min_max(self, junction_id, meta_key, min_meta_value, max_meta_value):
         storage = storage_layer.Storage()
-        detaset = storage.get_all_dataset_files(junction_id)
+        dataset = storage.get_all_dataset_files(junction_id)
         ans = []
-        for frames in detaset:
+        for frames in dataset:
+            i = -1
+            last = - FRAMES_JUMPS_ON_SEARCH - 2
             for frame in frames[2]:
+                i = i + 1
                 for vehicle in frame["objects"]:
-                    if min_meta_value <= vehicle[meta_key] <= max_meta_value:
-                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+                    if min_meta_value <= vehicle[meta_key] <= max_meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
+                        res = {
+                            'junction_id': junction_id,
+                            'dataset_id': frames[0],
+                            'vehicle_id': vehicle["tracking_id"],
+                            'frame_index': i,
+                            'number_of_frames': len(frames[2])
+                        }
+                        last = i
+                        ans.append(res)
         return ans
 
-    def search_data(self, junction_id, detaset_id, meta_key, meta_value):
+    def search_data_equal(self, junction_id, meta_key, meta_value):
         storage = storage_layer.Storage()
-        deta_set = storage.get_dataset_files(junction_id, detaset_id)
+        deta_set = storage.get_all_dataset_files(junction_id)
         ans = []
         for frames in deta_set:
+            i = -1
+            last = - FRAMES_JUMPS_ON_SEARCH - 2
             for frame in frames[2]:
+                i = i + 1
                 for vehicle in frame["objects"]:
-                    if vehicle[meta_key] == meta_value:
-                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+                    if vehicle[meta_key] == meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
+                        res = {
+                            'junction_id': junction_id,
+                            'dataset_id': frames[0],
+                            'vehicle_id': vehicle["tracking_id"],
+                            'frame_index': i,
+                            'number_of_frames': len(frames[2])
+                        }
+                        last = i
+                        ans.append(res)
         return ans
 
-    def search_data(self, junction_id, detaset_id, meta_key, min_meta_value, max_meta_value):
+    def search_data_min_max_with_dataset(self, junction_id, dataset_id, meta_key, min_meta_value, max_meta_value):
         storage = storage_layer.Storage()
-        deta_set = storage.get_dataset_files(junction_id, detaset_id)
+        deta_set = storage.get_dataset_files(junction_id, dataset_id)
         ans = []
         for frames in deta_set:
-            for frame in frames[2]:
+            i = -1
+            last = - FRAMES_JUMPS_ON_SEARCH - 2
+            for frame in frames:
+                i = i + 1
                 for vehicle in frame["objects"]:
-                    if min_meta_value <= vehicle[meta_key] <= max_meta_value:
-                        ans.append([vehicle["tracking_id"], frame["frame_index"], frames[1], frames[0]])
+                    if min_meta_value <= vehicle[meta_key] <= max_meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
+                        res = {
+                            'junction_id': junction_id,
+                            'dataset_id': dataset_id,
+                            'vehicle_id': vehicle["tracking_id"],
+                            'frame_index': i,
+                            'number_of_frames': len(frames)
+                        }
+                        last = i
+                        ans.append(res)
+        return ans
+
+    def search_data_equal_with_dataset(self, junction_id, dataset_id, meta_key, meta_value):
+        storage = storage_layer.Storage()
+        deta_set = storage.get_dataset_files(junction_id, dataset_id)
+        ans = []
+        for frames in deta_set:
+            i = -1
+            last = - FRAMES_JUMPS_ON_SEARCH - 2
+            for frame in frames:
+                i = i + 1
+                for vehicle in frame["objects"]:
+                    if vehicle[meta_key] == meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
+                        res = {
+                            'junction_id': junction_id,
+                            'dataset_id': dataset_id,
+                            'vehicle_id': vehicle["tracking_id"],
+                            'frame_index': i,
+                            'number_of_frames': len(frames)
+                        }
+                        last = i
+                        ans.append(res)
         return ans
 
 
