@@ -425,11 +425,16 @@ class App extends Component {
   };
 
   goToTab = tab_index => {
+    let selectedJunction = this.state.selectedJunction;
+    if(tab_index === TABS.junctions) {
+      selectedJunction = null;
+    }
     this.onEnded();
     this.setState({
       tab: tab_index,
       isMenuOpen: false,
-      search_results: []
+      search_results: [],
+      selectedJunction: selectedJunction
     });
     window.scrollTo(0,0);
   };

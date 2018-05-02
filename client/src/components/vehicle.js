@@ -7,9 +7,13 @@ import '../styles/Map.css';
 class Vehicle extends Component {
     
   render() {
+    let x = this.props.x;
+    if(x < 17) {
+      x *= 7 / 4;
+    }
     var style = {
         top: (this.props.y),// - this.getVehicleDimensions(this.props.type).height / 2) + 'px',
-        left: (this.props.x),// - this.getVehicleDimensions(this.props.type).width / 2) + 'px',
+        left: x,// - this.getVehicleDimensions(this.props.type).width / 2) + 'px',
         backgroundColor: 'blue',
         borderRadius: '50%',
         width: this.getVehicleDimensions(this.props.type).width + 'px',
@@ -63,14 +67,14 @@ class Vehicle extends Component {
     switch(type) {
       case 'bus':
       return {
-        width: 9,
-        height: 9
+        width: 5,
+        height: 12
       };
       case 'car':
       default:
         return {
-          width: 6,
-          height: 6
+          width: 4,
+          height: 8
         };
     }
   }
