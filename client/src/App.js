@@ -85,7 +85,7 @@ class App extends Component {
   };
 
   playPause = () => {
-    if((this.state.frames[0] === null && this.state.frames[1] === null && this.state.frames[2] === null && this.state.frames[3] === null) || (false && this.state.urls.filter(url => url != null).length === 0)) {
+    if(this.state.frames.filter(frames => frames != null).length === 0 || (false && this.state.urls.filter(url => url != null).length === 0)) {
       return false;
     }
     if(!this.state.playing) {
@@ -95,12 +95,11 @@ class App extends Component {
         if(self.state.playing && self.state.currentFrame < self.state.numOfFrames) {
           let played = self.state.currentFrame + 1;
           played /= self.state.numOfFrames;
+          timeout = FRAME_TIME / self.state.playbackRate;
           self.setState({
             currentFrame: self.state.currentFrame + 1,
             played: played
-          });
-          timeout = FRAME_TIME / self.state.playbackRate;
-          setTimeout(playFrame, timeout * SECOND);
+          }, function() { setTimeout(playFrame, timeout * SECOND); });
         } else {
           if(self.state.currentFrame >= self.state.numOfFrames) {
             self.onEnded();
@@ -136,18 +135,22 @@ class App extends Component {
   onSeekMouseUp = e => {
   };
   onProgress = state => {
-    if (!this.state.seeking) {
-      this.setState(state);
-    }
   };
   
   readVideoFile = (i, event) => {
+    let self = this;
     const input = event.target;
     const url = URL.createObjectURL(input.files[0]);
     let urls = this.state.urls;
     urls[i] = url;
     this.setState({
       urls: urls
+    }, function() {      
+      if(this.refs.videos) {
+        setTimeout(function() {
+          self.refs.videos.seekTo(self.state.played);
+        }, SECOND * FRAME_TIME);
+      }
     });
   };
 
@@ -175,7 +178,6 @@ class App extends Component {
     .then(function (response) {        
       try {
         let _frames = self.state.frames;
-        //console.log(JSON.stringify(response.data));
         _frames[i] = self.parseFrames(response.data, i);        
         let size = 0;
         _frames.map(function(frames_for_direction) {
@@ -241,8 +243,7 @@ class App extends Component {
         });
         self.setState({
           junctions: response.data
-        });
-        callback(response.data);
+        }, function() { callback(response.data); });
       }
       catch(e) {
         console.log(e);
@@ -296,7 +297,6 @@ class App extends Component {
       junction_id: self.state.selectedJunction ? self.state.selectedJunction.id : 0
     })
     .then(function (response) {
-      //console.log(response.data);
       try {
         let _frames = [];
         let i = 0;
@@ -361,8 +361,7 @@ class App extends Component {
       try {
         self.setState({
           selectedJunction: null
-        });
-        self.getJunctions(callback);
+        }, function() { self.getJunctions(callback); });        
       }
       catch(e) {
         console.log(e);
@@ -429,7 +428,8 @@ class App extends Component {
     this.onEnded();
     this.setState({
       tab: tab_index,
-      isMenuOpen: false
+      isMenuOpen: false,
+      search_results: []
     });
     window.scrollTo(0,0);
   };
@@ -638,6 +638,7 @@ class App extends Component {
             </Collapse>
           </Navbar>
           {curr_tab}
+          <hr/>
           <Search selectedJunction={this.state.selectedJunction}
                   junctions={this.state.junctions}
                   getDatasets={this.getDatasets.bind(this)}
