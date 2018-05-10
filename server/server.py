@@ -4,11 +4,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from io import BytesIO
 import Parser
-import db_layer
+import DBL
 import storage_layer
 import Sumo_Parser
 
-db = db_layer.DB()
+db = DBL.DB_Layer()
 storage = storage_layer.Storage()
 
 def getFrames(data):
