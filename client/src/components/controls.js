@@ -1,17 +1,23 @@
 /*jshint esversion: 6 */
 import React, { Component } from 'react';
-import { Container, Row, Col, Button } from 'reactstrap';
+import {
+    Container, 
+    Row, 
+    Col,
+    Button
+  } from 'reactstrap';
 import { PlayButton, PauseButton, ProgressBar } from 'react-player-controls';
 import '../styles/Controls.css';
 import '../styles/video_controls.css';
+import 'react-select/dist/react-select.css';
 
 const FRAME_TIME = 0.066666666666;
 
 class Controls extends Component {
 
-    render() {
-        //console.log(this.props.played);
+    
 
+    render() {
         let playPause = (
             <PlayButton isEnabled={true} onClick={this.props.playPause} />
         );
@@ -29,8 +35,39 @@ class Controls extends Component {
             console.log(e);
         }
 
+        let currJunction = (<span></span>);        
+        if(typeof this.props.selectedJunction === 'object' && this.props.selectedJunction != null) {
+            let currDataset = (<span></span>);
+            if(typeof this.props.selectedJunction.currentDataset === 'number' && this.props.selectedJunction.currentDataset != null) {
+                if(this.props.selectedJunction.datasets != null) {
+                    let self = this;
+                    this.props.selectedJunction.datasets.map(function(dataset) {
+                        if(dataset.id === self.props.selectedJunction.currentDataset) {
+                            currDataset = (
+                                <span>- {dataset.name}</span>
+                            );
+                        }
+                        return null;
+                    });
+                }
+            }
+            currJunction = (
+                <Container id="junction-controls-title">
+                    <Row>
+                        <Col xs={12}>
+                            <p>
+                                <strong>Showing Junction {this.props.selectedJunction.name} {currDataset}</strong>
+                                <Button color="primary" onClick={(e) => this.props.resetSelection()}>Reset</Button>
+                            </p>
+                        </Col>   
+                    </Row>
+                </Container>
+            );
+        }
+
         return (
           <div className="Controls player">
+            {currJunction}
             <Container>
                     <Row>
                         <Col xs={2}>

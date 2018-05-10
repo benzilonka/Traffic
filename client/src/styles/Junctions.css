@@ -27,3 +27,15 @@
 .simulationsList li {
     cursor: pointer;
 }
+
+#junction-controls-title Button {
+    float: right;
+}
+
+.search {
+    margin: 10px 10px 50px 10px;
+}
+
+.search-result {
+    cursor: pointer;
+}

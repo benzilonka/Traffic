@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 import React, { Component } from 'react';
-import { withScriptjs, withGoogleMap, GoogleMap, Marker } from "react-google-maps";
+import { withScriptjs, withGoogleMap, GoogleMap, Marker, TrafficLayer } from "react-google-maps";
 import { compose, withProps } from "recompose";
 import {
     Container, 
@@ -20,6 +20,8 @@ const MAP_DEFAULT = {
     zoom: 11
 };
 
+var i = 0;
+
 var MyMapComponent;
 
 class Junctions extends Component {
@@ -28,9 +30,8 @@ class Junctions extends Component {
         this.state = {
             show_create_junction_panel: false,
             show_add_dataset_panel: false
-        };
-        this.init_map();        
-        this.props.selectJunction();
+        };        
+        this.init_map();
     }
 
     init_map = () => {
@@ -55,12 +56,29 @@ class Junctions extends Component {
             withGoogleMap
           )((props) =>
             <GoogleMap
+                key={i}
                 defaultZoom={MAP_DEFAULT.zoom}
-                defaultCenter={{ lat: MAP_DEFAULT.lat, lng: MAP_DEFAULT.lng }}                
+                defaultCenter={{ lat: MAP_DEFAULT.lat, lng: MAP_DEFAULT.lng }}
+                onClick={props => this.handleClick(props)}
             >
-              {markers}
+                <TrafficLayer autoUpdate />
+                {markers}
             </GoogleMap>
         );
+        i++;
+    }
+
+    handleClick = ({ latLng }) => {
+        let new_junction = this.state.new_junction;
+        if(typeof new_junction === 'object') {
+            const lat = latLng.lat()
+            const lng = latLng.lng()
+            new_junction.lat = lat;
+            new_junction.lon = lng;
+            this.setState({
+                new_junction: new_junction
+            });
+        }
     }
 
     handleMarkerClick = junction => {
@@ -111,6 +129,7 @@ class Junctions extends Component {
         let self = this;
         this.props.deleteJunction(function(response) {
             self.init_map();
+            self.forceUpdate();
         });
     }
     toggleAddDataset = () => {

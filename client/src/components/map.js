@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 import React, { Component } from 'react';
 import Vehicle from './vehicle.js';
+import TrafficLight from './TrafficLight.js';
 import '../styles/Map.css';
 import loading_gif from '../images/loading.gif';
 
@@ -62,15 +63,22 @@ class Map extends Component {
   render() {
 
     let vehicles = [[], [], [], []];
+    let traffic_lights = [null, null, null, null];
     try {
       if(this.props.currentFrame != null) {
         let self = this;
         this.props.frames.map(function(directionFrames, index) {
-          if(directionFrames != null) {
-            if(directionFrames[self.props.currentFrame] != null) {
-              let _vehicles = directionFrames[self.props.currentFrame].map(function(vehicle) {
+          if(directionFrames != null && directionFrames.cars != null) {
+            if(directionFrames.cars[self.props.currentFrame] != null) {
+              let _vehicles = directionFrames.cars[self.props.currentFrame].map(function(vehicle) {
                 let x = vehicle.x;
                 let y = vehicle.y;
+                let highlight = false;
+                if(self.props.highlightVehicle != null) {
+                  if(vehicle.tracking_id === self.props.highlightVehicle) {
+                    highlight = true;
+                  }
+                }
                 return (
                     <Vehicle key={vehicle.key} 
                              x={x}
@@ -82,11 +90,20 @@ class Map extends Component {
                              showSpeed={self.props.showSpeed}
                              showTTC={self.props.showTTC}
                              showDistance={self.props.showDistance}
+                             highlight={highlight}
                              >
                     </Vehicle>
                 );
               });
               vehicles[index] = _vehicles;
+            }
+          }
+          if(directionFrames != null && directionFrames.traffic_lights != null) {
+            if(directionFrames.traffic_lights[self.props.currentFrame] != null) {
+              let t = directionFrames.traffic_lights[self.props.currentFrame];
+              traffic_lights[index] = (
+                <TrafficLight light={t}></TrafficLight>
+              );
             }
           }
           return null;
@@ -104,6 +121,8 @@ class Map extends Component {
         <div className="Loading" style={loadingStyle}></div>
       );
     }
+
+
     return (
       <div>
         <div className="Map" style={mapStyle}>
@@ -123,15 +142,19 @@ class Map extends Component {
           <div className="lanes-cont">
             <div className="lane" style={lane0Style}>
               {vehicles[DIRECTIONS.TOP_TO_DOWN]}
+              {traffic_lights[0]}
             </div>
             <div className="lane" style={lane1Style}>
               {vehicles[DIRECTIONS.RIGHT_TO_LEFT]}
+              {traffic_lights[1]}
             </div>
             <div className="lane" style={lane2Style}>
               {vehicles[DIRECTIONS.DOWN_TO_UP]}
+              {traffic_lights[2]}
             </div>
             <div className="lane" style={lane3Style}>
               {vehicles[DIRECTIONS.LEFT_TO_RIGHT]}
+              {traffic_lights[3]}
             </div>
           </div>
         </div>

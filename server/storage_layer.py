@@ -52,7 +52,7 @@ class Storage():
                         res.append([dirname.split("\\")[1], filename, json.loads(file_content)])
             return res
         except Exception as e:
-            print('storage get_dataset_files: Got error {!r}, errno is {}'.format(e, e.args[0]))
+            print('storage get_all_dataset_files: Got error {!r}, errno is {}'.format(e, e.args[0]))
             return list()
 
     def delete_junction(self, junction_id):

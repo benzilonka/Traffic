@@ -4,42 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
-
-def get_array(param):
-    ans = [[], []]
-    for i in range(0, len(param[1])):
-        coordinates = param[1][i]
-        ans[0].append(coordinates[0])
-        ans[1].append(coordinates[1])
-    return ans
-
-
-def clean_routs(hash_vehicles):
-    while hash_vehicles.__len__() > 0:
-        array = get_array(hash_vehicles.popitem())
-        x = array[0]
-        y = array[1]
-
-    return hash_vehicles
-
-
-def clean_routs_jsons(hash_vehicles, jsons):
-    list_index_hash_vehicles = []
-    for json in jsons:
-        objects = json['objects']
-        for i in range(0, len(objects)):
-            vehicle = objects[i]
-            vehicle_id = int(vehicle['tracking_id'])
-            if not list_index_hash_vehicles.__contains__(vehicle_id):
-                list_index_hash_vehicles[vehicle_id] = 0
-            vehicle_list = hash_vehicles[vehicle_id]
-            vehicle_index_count = list_index_hash_vehicles[vehicle_id]
-            vehicle['bounding_box'][0] = vehicle_list[vehicle_index_count]['y']
-            vehicle['bounding_box'][1] = vehicle_list[vehicle_index_count]['x']
-            list_index_hash_vehicles[vehicle_id] += 1
-    return jsons
-
-
 def clean(data):
     jsons = data.replace("'", '"').replace("False", "false").replace("True", "true").split("\n")
     hash_vehicles = {}
@@ -64,8 +28,6 @@ def clean(data):
             coordinates[1] = vehicle['bounding_box'][1]
             hash_vehicles[vehicle_id].append(coordinates)
             vehiclesSpeed[vehicle_id].append(vehicle['speed'])
-
-    #hash_vehicles = clean_routs(hash_vehicles)
     hash_vehicles, vehiclesSpeed = normalizeData(hash_vehicles, vehiclesSpeed)
     jsons = updateJson(jsons, hash_vehicles, vehiclesSpeed)
     return jsons
@@ -144,33 +106,37 @@ def smoothData(path):
     threshold = 15
     polynomialDeg = 4
 
-    # get x and y vectors
-    x = points[:, 0]
-    y = points[:, 1]
-    # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
-    if numOfPoints > threshold:
-        numOfPoints = int(numOfPoints/2)
-    # this param in savgol_filter has to be a positive odd number
-    if numOfPoints % 2 == 0:
-        numOfPoints -= 1
+    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter method
+    if numOfPoints > polynomialDeg:
+        # get x and y vectors
+        x = points[:, 0]
+        y = points[:, 1]
+        # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
+        if numOfPoints > threshold:
+            numOfPoints = int(numOfPoints/2)
+        # this param in savgol_filter has to be a positive odd number
+        if numOfPoints % 2 == 0:
+            numOfPoints -= 1
 
-    # smooth the path using Savitzky–Golay filter using 4th degree polynomial
-    x_new = savgol_filter(x, numOfPoints, polynomialDeg)
-    y_new = savgol_filter(y, numOfPoints, polynomialDeg)
+        # smooth the path using Savitzky–Golay filter using 4th degree polynomial
+        x_new = savgol_filter(x, numOfPoints, polynomialDeg)
+        y_new = savgol_filter(y, numOfPoints, polynomialDeg)
 
-    """plt.subplot(211)
-    plt.plot(x, 'o', x_new)
-    plt.title('Polynomial Fit X with Matplotlib')
-
-    plt.subplot(212)
-    plt.plot(y, 'o', y_new)
-    plt.title('Polynomial Fit Y with Matplotlib')
-
-    plt.show()"""
-    result = []
-    for i in range(0, len(x_new)):
-        result.append([x_new[i], y_new[i]])
-    return result
+        """plt.subplot(211)
+        plt.plot(x, 'o', x_new)
+        plt.title('Polynomial Fit X with Matplotlib')
+    
+        plt.subplot(212)
+        plt.plot(y, 'o', y_new)
+        plt.title('Polynomial Fit Y with Matplotlib')
+    
+        plt.show()"""
+        result = []
+        for i in range(0, len(x_new)):
+            result.append([x_new[i], y_new[i]])
+        return result
+    else:
+        return path
 
 # Calculate the distance between two locations using Pythagorean Theorem
 def calcDistance(startLocation, endLocation):

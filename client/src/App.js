@@ -19,7 +19,8 @@ import Videos from './components/videos.js';
 import Map from './components/map.js';
 import Controls from './components/controls.js';
 import Junctions from './components/junctions.js';
-import Simulation from './components/simulation';
+import Simulation from './components/simulation.js';
+import Search from './components/search.js';
 import './styles/App.css';
 
 const FRAME_TIME = 0.066666666666;
@@ -51,7 +52,8 @@ class App extends Component {
       tab: TABS.main,
       junctions: [],
       selectedJunction: null,
-      isMenuOpen: false
+      isMenuOpen: false,
+      search_results: []
     };
 
     this.getJunctions(function() {});
@@ -73,8 +75,17 @@ class App extends Component {
     });
   };
 
+  resetSelection = () => {
+    this.onEnded();
+    this.setState({
+      frames: [null, null, null, null],
+      urls: [null, null, null, null],
+      selectedJunction: null
+    });
+  };
+
   playPause = () => {
-    if(this.state.currentFrame == null || (false && this.state.urls.filter(url => url != null).length === 0)) {
+    if(this.state.frames.filter(frames => frames != null).length === 0 || (false && this.state.urls.filter(url => url != null).length === 0)) {
       return false;
     }
     if(!this.state.playing) {
@@ -84,26 +95,27 @@ class App extends Component {
         if(self.state.playing && self.state.currentFrame < self.state.numOfFrames) {
           let played = self.state.currentFrame + 1;
           played /= self.state.numOfFrames;
+          timeout = FRAME_TIME / self.state.playbackRate;
           self.setState({
             currentFrame: self.state.currentFrame + 1,
             played: played
-          });
-          timeout = FRAME_TIME / self.state.playbackRate;
-          setTimeout(playFrame, timeout * SECOND);
+          }, function() { setTimeout(playFrame, timeout * SECOND); });
         } else {
-          self.onEnded();
+          if(self.state.currentFrame >= self.state.numOfFrames) {
+            self.onEnded();
+          }
         }
       };
       setTimeout(playFrame, timeout);
     }
     this.setState({ playing: !this.state.playing });
     return false;
-  }
+  };
   onEnded = () => {
     this.setState({ 
       playing: false,
       played: 0,
-      currentFrame: 0
+      currentFrame: null
     });    
   };
   setPlaybackRate = rate => {
@@ -123,18 +135,22 @@ class App extends Component {
   onSeekMouseUp = e => {
   };
   onProgress = state => {
-    if (!this.state.seeking) {
-      this.setState(state);
-    }
   };
   
   readVideoFile = (i, event) => {
+    let self = this;
     const input = event.target;
     const url = URL.createObjectURL(input.files[0]);
     let urls = this.state.urls;
     urls[i] = url;
     this.setState({
       urls: urls
+    }, function() {      
+      if(this.refs.videos) {
+        setTimeout(function() {
+          self.refs.videos.seekTo(self.state.played);
+        }, SECOND * FRAME_TIME);
+      }
     });
   };
 
@@ -162,12 +178,11 @@ class App extends Component {
     .then(function (response) {        
       try {
         let _frames = self.state.frames;
-        //console.log(JSON.stringify(response.data));
         _frames[i] = self.parseFrames(response.data, i);        
         let size = 0;
         _frames.map(function(frames_for_direction) {
-          if(frames_for_direction && frames_for_direction.length > size) {
-            size = frames_for_direction.length;
+          if(frames_for_direction && frames_for_direction.cars && frames_for_direction.cars.length > size) {
+            size = frames_for_direction.cars.length;
           }
           return null;
         });
@@ -186,7 +201,10 @@ class App extends Component {
 
   parseFrames = (json, direction) => {
     let i = 0;
-    let frames = [];
+    let frames = {
+      cars: [],
+      traffic_lights: []
+    };
     json.map(function(frame) {
       let cars = [];
       frame.objects.map(function(car) {
@@ -204,7 +222,8 @@ class App extends Component {
         i++;
         return null;
       });
-      frames.push(cars);
+      frames.cars.push(cars);
+      frames.traffic_lights.push(frame.light_status);
       return null;
     });
     return frames;
@@ -224,8 +243,7 @@ class App extends Component {
         });
         self.setState({
           junctions: response.data
-        });
-        callback(response.data);
+        }, function() { callback(response.data); });
       }
       catch(e) {
         console.log(e);
@@ -243,7 +261,18 @@ class App extends Component {
     .then(function (response) {        
       try {
         let selectedJunction = self.state.selectedJunction;
-        selectedJunction.datasets = response.data;
+        if(selectedJunction == null) {
+          selectedJunction = self.getJunction(junction_id);
+          if(selectedJunction !== null) {
+            selectedJunction.datasets = response.data;
+          } else {
+            selectedJunction = {
+              datasets: response.data
+            };
+          }
+        } else {
+          selectedJunction.datasets = response.data;
+        }
         self.setState({
           selectedJunction: selectedJunction
         });
@@ -256,7 +285,7 @@ class App extends Component {
     });
   };
 
-  getDatasetFiles = dataset_id => {
+  getDatasetFiles = (dataset_id, callback = null) => {
     this.setState({
       frames: [null, null, null, null],
       urls: [null, null, null, null]
@@ -268,7 +297,6 @@ class App extends Component {
       junction_id: self.state.selectedJunction ? self.state.selectedJunction.id : 0
     })
     .then(function (response) {
-      console.log(response.data);
       try {
         let _frames = [];
         let i = 0;
@@ -279,8 +307,8 @@ class App extends Component {
         });
         let size = 0;
         _frames.map(function(frames_for_direction) {
-          if(frames_for_direction.length > size) {
-            size = frames_for_direction.length;
+          if(frames_for_direction.cars.length > size) {
+            size = frames_for_direction.cars.length;
           }
           return null;
         });
@@ -297,6 +325,9 @@ class App extends Component {
         });
         self.onEnded();
         self.goToTab(TABS.main);
+        if(typeof callback === 'function') {
+          callback();
+        }
       }
       catch(e) {
         console.log(e);
@@ -330,8 +361,7 @@ class App extends Component {
       try {
         self.setState({
           selectedJunction: null
-        });
-        self.getJunctions(callback);
+        }, function() { self.getJunctions(callback); });        
       }
       catch(e) {
         console.log(e);
@@ -395,11 +425,18 @@ class App extends Component {
   };
 
   goToTab = tab_index => {
+    let selectedJunction = this.state.selectedJunction;
+    if(tab_index === TABS.junctions) {
+      selectedJunction = null;
+    }
     this.onEnded();
     this.setState({
       tab: tab_index,
-      isMenuOpen: false
+      isMenuOpen: false,
+      search_results: [],
+      selectedJunction: selectedJunction
     });
+    window.scrollTo(0,0);
   };
   toggleMenu = () => {
     this.setState({
@@ -407,17 +444,73 @@ class App extends Component {
     });
   };
   selectJunction = junction => {
+    //console.log(junction);
     if(junction) {
       junction.datasets = [];
       this.setState({
         selectedJunction: junction
       });
-      this.getDatasets(junction.id, function() {});
+      if(junction.datasets == null || junction.datasets.length === 0) {
+        this.getDatasets(junction.id, function() {});
+      }
     } else {
       this.setState({
         selectedJunction: null
       });
     }   
+  };
+  getJunction = junction_id => {
+    let ret = null;
+    if(this.state.junctions != null) {
+      this.state.junctions.map(function(junction) {
+        if(junction.id === junction_id) {
+          ret = junction;
+        }
+        return null;
+      });
+    }
+    return ret;
+  };
+  search = params => {
+    if(params.selectedJunction == null || params.selectedValue == null || (params.selectedValue === 'equal' && params.equalTo == null) || (params.selectedValue === 'minmax' && (params.min == null || params.max == null))) {
+      return;
+    }
+    let data = {
+      route: 'searchData',
+      junction_id: params.selectedJunction,
+      meta_key: params.selectedField,
+    };
+    if(params.selectedDataset > 0) {
+      data.dataset_id = params.selectedDataset;
+    }
+    switch(params.selectedValue) {
+      case 'equal':
+        data.meta_value = params.equalTo;
+        break;
+      case 'minmax':
+        data.min_meta_value = params.min;
+        data.max_meta_value = params.max;
+        break;
+      default:
+        break;
+    }
+    let self = this;
+    axios.post(SERVER_URL, data)
+    .then(function (response) {
+      try {
+        self.setState({
+          search_results: response.data
+        });
+      }
+      catch(e) {
+        console.log(e);
+      }
+    });
+  };
+  highlightVehicle = vehicle_id => {
+    this.setState({
+      highlightVehicle: vehicle_id
+    });
   };
 
   render() {
@@ -439,7 +532,8 @@ class App extends Component {
                       loading={this.state.loading}
                       showSpeed={this.state.showSpeed}
                       showTTC={this.state.showTTC}
-                      showDistance={this.state.showDistance}>
+                      showDistance={this.state.showDistance}
+                      highlightVehicle={this.state.highlightVehicle}>
                   </Map>
                 </Col>
                 <Col xs={5}>
@@ -470,7 +564,11 @@ class App extends Component {
                               onSeekMouseUp={this.onSeekMouseUp.bind(this)}
                               toggleShowSpeed={this.toggleShowSpeed.bind(this)}
                               toggleShowTTC={this.toggleShowTTC.bind(this)}
-                              toggleShowDistance={this.toggleShowDistance.bind(this)}>
+                              toggleShowDistance={this.toggleShowDistance.bind(this)}
+                              selectedJunction={this.state.selectedJunction}
+                              resetSelection={this.resetSelection.bind(this)}
+                              junctions={this.state.junctions}
+                              getDatasets={this.getDatasets.bind(this)}>
                       </Controls>
                     </Col>
                   </Row>
@@ -545,6 +643,16 @@ class App extends Component {
             </Collapse>
           </Navbar>
           {curr_tab}
+          <hr/>
+          <Search selectedJunction={this.state.selectedJunction}
+                  junctions={this.state.junctions}
+                  getDatasets={this.getDatasets.bind(this)}
+                  search={this.search.bind(this)}
+                  search_results={this.state.search_results}
+                  getDatasetFiles={this.getDatasetFiles.bind(this)}
+                  onSeekChange={this.onSeekChange.bind(this)}
+                  highlightVehicle={this.highlightVehicle.bind(this)}
+          ></Search>
       </div>
     );
   }
