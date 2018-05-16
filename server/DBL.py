@@ -15,7 +15,7 @@ DB_PASSWD = '123456'
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 FRAMES_JUMPS_ON_SEARCH = 16
-
+storage = storage_layer.Storage()
 vidio_db = vidio_info_db.vidio_info_db()
 junction_db = junction_db.junction_info_db()
 simulation_db = simulation_info.simulation_info_db()
@@ -157,7 +157,7 @@ class DB_Layer(object):
         vidio_db.delete_vidio_info(id)
 
     def search_data_min_max(self, junction_id, meta_key, min_meta_value, max_meta_value):
-        storage = storage_layer.Storage()
+       
         dataset = storage.get_all_dataset_files(junction_id)
         ans = []
         for frames in dataset:
@@ -179,7 +179,7 @@ class DB_Layer(object):
         return ans
 
     def search_data_equal(self, junction_id, meta_key, meta_value):
-        storage = storage_layer.Storage()
+       
         deta_set = storage.get_all_dataset_files(junction_id)
         ans = []
         for frames in deta_set:
@@ -201,7 +201,7 @@ class DB_Layer(object):
         return ans
 
     def search_data_min_max_with_dataset(self, junction_id, dataset_id, meta_key, min_meta_value, max_meta_value):
-        storage = storage_layer.Storage()
+        
         deta_set = storage.get_dataset_files(junction_id, dataset_id)
         ans = []
         for frames in deta_set:
@@ -223,7 +223,7 @@ class DB_Layer(object):
         return ans
 
     def search_data_equal_with_dataset(self, junction_id, dataset_id, meta_key, meta_value):
-        storage = storage_layer.Storage()
+        
         deta_set = storage.get_dataset_files(junction_id, dataset_id)
         ans = []
         for frames in deta_set:
@@ -244,6 +244,14 @@ class DB_Layer(object):
                         ans.append(res)
         return ans
 
+    def get_dataset_files(self,junction_id,vidio_info_id):
+        return storage.get_dataset_files(junction_id, vidio_info_id)
+
+    def store_dataset_file(self,junction_id, vidio_info_id, index, file_content):
+        storage.store_dataset_file(junction_id, vidio_info_id, index, file_content)
+        
+    def delete_junction (self,junction_id):
+        storage.delete_junction(junction_id) 
 
    
     

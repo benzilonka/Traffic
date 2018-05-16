@@ -5,11 +5,11 @@ import json
 from io import BytesIO
 import Parser
 import DBL
-import storage_layer
+
 import Sumo_Parser
 
 db = DBL.DB_Layer()
-storage = storage_layer.Storage()
+
 
 def getFrames(data):
     return Parser.fix_file(data['meta'], json.loads(data['json']))
@@ -21,7 +21,7 @@ def getDatasets(data):
     return db.get_datasets(data['junction_id'])
 
 def getDatasetFiles(data):
-    return storage.get_dataset_files(data['junction_id'], data['dataset_id'])
+    return db.get_dataset_files(data['junction_id'], data['dataset_id'])
 
 def addJunction(data):
     return db.add_junction(data['junction'])
@@ -31,12 +31,12 @@ def addDataset(data):
 
 def addDatasetFile(data):
     file_content = Parser.fix_file(data['meta'], json.loads(data['json']))
-    storage.store_dataset_file(data['junction_id'], data['dataset_id'], data['index'], file_content)
+    db.store_dataset_file(data['junction_id'], data['dataset_id'], data['index'], file_content)
     return file_content
 
 def deleteJunction(data):
     db.delete_junction(data['junction_id'])
-    storage.delete_junction(data['junction_id'])
+    db.delete_junction(data['junction_id'])
     return True
 
 def createSimulation(data):
@@ -44,7 +44,7 @@ def createSimulation(data):
     _jsons = Sumo_Parser.get_simulation(data['simulation']['duration'], data['simulation']['cars_per_second'], data['simulation']['vehicle_info'])
     index = 0
     for _json in _jsons:
-        storage.store_dataset_file(0, dataset_id, index, _json)
+        db.store_dataset_file(0, dataset_id, index, _json)
         index = index + 1
     return dataset_id
 
