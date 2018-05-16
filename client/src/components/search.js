@@ -45,10 +45,18 @@ class Search extends Component {
         this.setState({ selectedDataset: selectedOption.value });
     };
     handleFieldSelectChange = (selectedOption) => {
+        if(selectedOption.bool) {            
+            this.setState({ selectedValue: 'bool' });
+        } else {
+            this.setState({ selectedValue: null });
+        }
         this.setState({ selectedField: selectedOption.value });
     };
     handleValueChange = (selectedOption) => {
         this.setState({ selectedValue: selectedOption });
+    };
+    handleBoolChange = (selectedOption) => {
+        this.setState({ equalTo: selectedOption });
     };
     handleEqualToChange = e => {
         this.setState({
@@ -113,6 +121,15 @@ class Search extends Component {
 
         let inputs = (<span></span>);
         switch(this.state.selectedValue) {
+            case 'bool':
+                inputs = (
+                    <RadioGroup name="equalTo" onChange={this.handleBoolChange}>
+                        <Radio value={1} /> True
+                        <br/>
+                        <Radio value={0} /> False
+                    </RadioGroup>
+                );
+                break;
             case 'equal':
                 inputs = (
                     <Input 
@@ -171,6 +188,17 @@ class Search extends Component {
             results_wrap = (<p>Nothing to show</p>);
         }
 
+        let radios = (<span></span>);
+        if(this.state.selectedValue != 'bool') {
+            radios = (
+                <RadioGroup name="values" selectedValue={this.state.selectedValue} onChange={this.handleValueChange}>
+                    <Radio value="equal" /> Equal to
+                    <br/>
+                    <Radio value="minmax" /> Min-Max
+                </RadioGroup>
+            );
+        }
+
         let search_body = (
             <div>
                 <FormGroup>
@@ -196,13 +224,12 @@ class Search extends Component {
                         options={[
                         { value: 'ttc', label: 'TTC' },
                         { value: 'speed', label: 'Speed' },
+                        { value: 'against_direction_flag', label: 'Against Direction', bool: true },
+                        { value: 'passed_in_red', label: 'Passed in Red', bool: true },
+                        { value: 'change_lane_count', label: 'Change Lane Count' },
                         ]}
                     />
-                    <RadioGroup name="values" selectedValue={this.state.selectedValue} onChange={this.handleValueChange}>
-                        <Radio value="equal" /> Equal to
-                        <br/>
-                        <Radio value="minmax" /> Min-Max
-                    </RadioGroup>
+                    {radios}
                     {inputs}
                     <Button color="primary" onClick={(e) => this.props.search(this.state)}>Search</Button>
                     {results_wrap}

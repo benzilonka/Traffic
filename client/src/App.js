@@ -472,7 +472,8 @@ class App extends Component {
     return ret;
   };
   search = params => {
-    if(params.selectedJunction == null || params.selectedValue == null || (params.selectedValue === 'equal' && params.equalTo == null) || (params.selectedValue === 'minmax' && (params.min == null || params.max == null))) {
+    console.log(params);
+    if(params.selectedJunction == null || params.selectedValue == null || ((params.selectedValue === 'equal' || params.selectedValue === 'bool') && params.equalTo == null) || (params.selectedValue === 'minmax' && (params.min == null || params.max == null))) {
       return;
     }
     let data = {
@@ -485,6 +486,7 @@ class App extends Component {
     }
     switch(params.selectedValue) {
       case 'equal':
+      case 'bool':
         data.meta_value = params.equalTo;
         break;
       case 'minmax':
@@ -494,6 +496,7 @@ class App extends Component {
       default:
         break;
     }
+    console.log(data);
     let self = this;
     axios.post(SERVER_URL, data)
     .then(function (response) {
