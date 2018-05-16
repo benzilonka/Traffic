@@ -105,7 +105,7 @@ class simulation_info_db(object):
             with connection.cursor() as cursor:
                 # Read a single record
                 sql = "SELECT * FROM `simulation_info`"
-                cursor.execute(sql, (junction_id))
+                cursor.execute(sql, ())
             
                 result = cursor.fetchall()
                 for simul in result:
