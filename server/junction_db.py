@@ -1,13 +1,13 @@
 from datetime import datetime
 from dateutil.parser import parse
-import pandas as pd
+
 import pymysql
 
 import os
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = '123456'
+DB_PASSWD = 'Yrtphe1820-='
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 

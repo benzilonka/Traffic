@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import subprocess
@@ -7,7 +8,54 @@ from datetime import datetime
 from xml.dom import minidom
 import xml.etree.cElementTree as ET
 
+from Parser import get_vehicles
+
 SUMO_DIRECTION = 1
+
+
+def get_vehicles(frame):
+    ans = {}
+    for vehicle in frame["objects"]:
+        ans[vehicle["tracking_id"]] = vehicle
+    return ans
+
+
+def all_frame_per_second(current_frame, prev_frame):
+    prev_vehicle = get_vehicles(prev_frame)
+    current_vehicle = get_vehicles(current_frame)
+    vehicles_info = {}
+    for vehicle_id in prev_vehicle.keys():
+        if vehicle_id in current_vehicle:
+            speed_delta = current_vehicle[vehicle_id]["speed"] - prev_vehicle[vehicle_id]["speed"]
+            speed_delta /= 15
+            x_delta = current_vehicle[vehicle_id]["bounding_box"][0] - prev_vehicle[vehicle_id]["bounding_box"][0]
+            x_delta /= 15
+            y_delta = current_vehicle[vehicle_id]["bounding_box"][1] - prev_vehicle[vehicle_id]["bounding_box"][1]
+            y_delta /= 15
+            vehicles_info[vehicle_id] = {"speed_delta": speed_delta, "x_delta": x_delta, "y_delta": y_delta}
+    frames_ans = [prev_frame]
+    for i in range(1, 15):
+        frame = {"frame_index": prev_frame["frame_index"] + i, "light_status": prev_frame["light_status"],
+                 "objects": []}
+        for vehicle_id in vehicles_info.keys():
+            vehicle = copy.deepcopy(prev_vehicle[vehicle_id])
+            vehicle["speed"] += vehicles_info[vehicle_id]["speed_delta"] * i
+            vehicle["bounding_box"][0] += vehicles_info[vehicle_id]["x_delta"] * i
+            vehicle["bounding_box"][1] += vehicles_info[vehicle_id]["y_delta"] * i
+            frame["objects"].append(vehicle)
+        frames_ans.append(frame)
+    current_frame["frame_index"] = prev_frame["frame_index"] + 15
+    return frames_ans
+
+
+def add_frame_per_second(frames):
+    frames_ans = [[], [], [], []]
+    j = 0
+    for direction in frames:
+        for i in range(1, len(direction)):
+            frames_ans[j] += (all_frame_per_second(direction[i], direction[i - 1]))
+        j += 1
+    return frames_ans
 
 
 def add_traffic_light_status(frames, angle, traffic_timing):
@@ -121,10 +169,10 @@ def get_light_timing(net_file_name):
     raw_input = file.getElementsByTagName('phase')
     if not raw_input:
         return {}
-    light_ans = {"total": 0, 0: {"right": [0, 0, 0], "forward": [0, 0, 0], "left": [0, 0, 0]},
-                 90: {"right": [0, 0, 0], "forward": [0, 0, 0], "left": [0, 0, 0]},
-                 180: {"right": [0, 0, 0], "forward": [0, 0, 0], "left": [0, 0, 0]},
-                 270: {"right": [0, 0, 0], "forward": [0, 0, 0], "left": [0, 0, 0]}}
+    light_ans = {"total": 0, 0: {"left": [0, 0, 0], "forward": [0, 0, 0], "right": [0, 0, 0]},
+                 90: {"left": [0, 0, 0], "forward": [0, 0, 0], "right": [0, 0, 0]},
+                 180: {"left": [0, 0, 0], "forward": [0, 0, 0], "right": [0, 0, 0]},
+                 270: {"left": [0, 0, 0], "forward": [0, 0, 0], "right": [0, 0, 0]}}
     for phase in raw_input:
         duration = int(phase.attributes['duration'].value)
         state = phase.attributes['state'].value
@@ -152,6 +200,7 @@ def sumo_parse(in_file_name, net_file_name, gui_boundaries, sumo_boundaries):
     file = minidom.parse(in_file_name)
     time_step = file.getElementsByTagName('timestep')
     jsons_ans = create_frames(time_step, get_light_timing(net_file_name), gui_boundaries, sumo_boundaries)
+    jsons_ans = add_frame_per_second(jsons_ans)
     write_jsons_to_files(jsons_ans, ["data_set_0.json", "data_set_1.json", "data_set_2.json", "data_set_3.json"])
     return jsons_ans
 
@@ -171,7 +220,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-#vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+# vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):

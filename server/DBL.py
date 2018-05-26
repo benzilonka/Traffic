@@ -1,6 +1,6 @@
 from datetime import datetime
 from dateutil.parser import parse
-import pandas as pd
+
 import pymysql
 import junction_db
 import simulation_info
@@ -11,9 +11,10 @@ import json
 import os
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = '123456'
+DB_PASSWORD = 'Yrtphe1820-='
 DB_NAME = 'traffic'
-DB_CHARSET = 'utf8mb4'
+DB_PORT = 3306
+DB_CHARSET = 'utf8'
 FRAMES_JUMPS_ON_SEARCH = 16
 storage = storage_layer.Storage()
 vidio_db = vidio_info_db.vidio_info_db()
@@ -41,7 +42,7 @@ class DB_Layer(object):
         # Connect to the database
         connection = pymysql.connect(host=DB_HOST,
                                     user=DB_USER,
-                                    password=DB_PASSWD,
+                                    password=DB_PASSWORD,
                                     db=DB_NAME,
                                     charset=DB_CHARSET,
                                     cursorclass=pymysql.cursors.DictCursor)
@@ -59,16 +60,16 @@ class DB_Layer(object):
             # your changes.
             connection.commit()
 
-            
+
         finally:
             connection.close()
-        return    
+        return
 
     def drop_all_tables(self):
         # Connect to the database
         connection = pymysql.connect(host=DB_HOST,
                                     user=DB_USER,
-                                    password=DB_PASSWD,
+                                    password=DB_PASSWORD,
                                     db=DB_NAME,
                                     charset=DB_CHARSET,
                                     cursorclass=pymysql.cursors.DictCursor)
@@ -96,7 +97,7 @@ class DB_Layer(object):
        
         connection = pymysql.connect(host=DB_HOST,
                                     user=DB_USER,
-                                    password=DB_PASSWD,
+                                    password=DB_PASSWORD,
                                     db=DB_NAME,
                                     charset=DB_CHARSET,
                                     cursorclass=pymysql.cursors.DictCursor)

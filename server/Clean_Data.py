@@ -1,8 +1,8 @@
 import json
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
+
 
 def clean(data):
     jsons = data.replace("'", '"').replace("False", "false").replace("True", "true").split("\n")
@@ -31,6 +31,7 @@ def clean(data):
     hash_vehicles, vehiclesSpeed = normalizeData(hash_vehicles, vehiclesSpeed)
     jsons = updateJson(jsons, hash_vehicles, vehiclesSpeed)
     return jsons
+
 
 def updateJson(jsonFile, vehiclesPath, vehiclesSpeed):
     # Pass through all the frames in order to update them
@@ -118,7 +119,7 @@ def smoothData(path):
         if numOfPoints % 2 == 0:
             numOfPoints -= 1
 
-        # smooth the path using Savitzky–Golay filter using 4th degree polynomial
+        # smooth the path using Savitzky-Golay filter using 4th degree polynomial
         x_new = savgol_filter(x, numOfPoints, polynomialDeg)
         y_new = savgol_filter(y, numOfPoints, polynomialDeg)
 
@@ -146,7 +147,7 @@ def calcDistance(startLocation, endLocation):
 
 def checkForLegalDifferSpeed(vehicleSpeedList, vehiclePath):
     # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
-    deltaTime = 1/15
+    deltaTime = 1. / 15
     index = 0
     while index < len(vehiclePath)-1:
         distance = calcDistance(vehiclePath[index], vehiclePath[index+1])

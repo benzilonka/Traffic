@@ -14,7 +14,7 @@ class DB_Layer(object):
         
         DB_HOST = 'localhost'
         DB_USER = 'project'
-        DB_PASSWD = '123456'
+        DB_PASSWD = 'Yrtphe1820-='
         dbname = 'my_project'
 
         # Driectory Path

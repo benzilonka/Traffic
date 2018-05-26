@@ -21,7 +21,7 @@ class TrafficLight extends Component {
     let right = (<div style={rightStyle}></div>);
     return (
       <div className="traffic-light">
-        {left}{forward}{right}
+        {right}{forward}{left}
       </div>
     );
   }
