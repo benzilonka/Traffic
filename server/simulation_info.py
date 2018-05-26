@@ -1,13 +1,13 @@
 from datetime import datetime
 from dateutil.parser import parse
-import pandas as pd
+
 import pymysql
 import ast
 import os
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = '123456'
+DB_PASSWD = 'Yrtphe1820-='
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 
@@ -100,13 +100,10 @@ class simulation_info_db(object):
                                     cursorclass=pymysql.cursors.DictCursor)
 
         try:
-       
-
             with connection.cursor() as cursor:
                 # Read a single record
                 sql = "SELECT * FROM `simulation_info`"
-                cursor.execute(sql, ())
-            
+                cursor.execute(sql)
                 result = cursor.fetchall()
                 for simul in result:
                     simul['vehicle_info'] = ast.literal_eval(simul['vehicle_info'])

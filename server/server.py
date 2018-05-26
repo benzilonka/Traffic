@@ -113,7 +113,18 @@ def run():
     print('http server is running...')
     httpd.serve_forever()
 
+
 if __name__ == '__main__':
-    run() 
-    
-    
+    run()
+# with open("big_22.12.2017-10_28_44.json", 'r') as jso:
+#     with open("scheduled_11.03.2018-05_24_50.meta", 'r') as meta:
+#         a = {'meta': meta.read(), 'json': jso.read()}
+#         with open("out.txt", 'w') as outfile:
+#             out = getFrames(a)
+#             for frame in out:
+#                 outfile.write(str(frame))
+#                 outfile.write('\n')
+
+
+
+

@@ -1,5 +1,4 @@
 import json
-from typing import List
 
 import Clean_Data
 import Calibration_1
@@ -57,3 +56,6 @@ def get_vehicles(frame):
             y = box[1]
         points.append([x, y])
     return points
+
+
+
