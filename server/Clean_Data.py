@@ -200,6 +200,7 @@ def linearMovement(start, end, path):
             for i in range(index, len(path)-1):
                 path[i][1] = path[i-1][1]
     else:
+        index = 0
         path = linearMovementHelper(directionX, directionY, path, index)
     return path
 

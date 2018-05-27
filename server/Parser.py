@@ -1,9 +1,9 @@
 import json
 from typing import List
 
-import Clean_Data
-import Calibration_1
-import Data_Analysis
+from . import Clean_Data
+from . import Calibration_1
+from . import Data_Analysis
 
 RECT_WIDTH = 35
 RECT_HEIGHT = 690

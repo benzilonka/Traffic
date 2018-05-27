@@ -11,7 +11,7 @@ import json
 import os
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = '123456'
+DB_PASSWD = 'Yrtphe1820-='
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 FRAMES_JUMPS_ON_SEARCH = 16
