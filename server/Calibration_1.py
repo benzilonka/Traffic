@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from . import Parser
+import Parser
 
 
 def create_rect(width, height):

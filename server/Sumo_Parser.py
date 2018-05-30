@@ -13,7 +13,7 @@ from Parser import get_vehicles
 SUMO_DIRECTION = 1
 
 
-def get_vehicles(frame):
+def get_vehicles_from_frame(frame):
     ans = {}
     for vehicle in frame["objects"]:
         ans[vehicle["tracking_id"]] = vehicle
@@ -21,8 +21,8 @@ def get_vehicles(frame):
 
 
 def all_frame_per_second(current_frame, prev_frame):
-    prev_vehicle = get_vehicles(prev_frame)
-    current_vehicle = get_vehicles(current_frame)
+    prev_vehicle = get_vehicles_from_frame(prev_frame)
+    current_vehicle = get_vehicles_from_frame(current_frame)
     vehicles_info = {}
     for vehicle_id in prev_vehicle.keys():
         if vehicle_id in current_vehicle:
@@ -200,7 +200,7 @@ def sumo_parse(in_file_name, net_file_name, gui_boundaries, sumo_boundaries):
     file = minidom.parse(in_file_name)
     time_step = file.getElementsByTagName('timestep')
     jsons_ans = create_frames(time_step, get_light_timing(net_file_name), gui_boundaries, sumo_boundaries)
-    jsons_ans = add_frame_per_second(jsons_ans)
+   # jsons_ans = add_frame_per_second(jsons_ans)
     write_jsons_to_files(jsons_ans, ["data_set_0.json", "data_set_1.json", "data_set_2.json", "data_set_3.json"])
     return jsons_ans
 
@@ -220,7 +220,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-# vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):
@@ -245,4 +245,4 @@ def get_simulation(duration, cars_per_second, vehicle_info):
     return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
 
 
-#get_simulation(100, 0.5, vehicle_info1)
+get_simulation(100, 0.5, vehicle_info1)

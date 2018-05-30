@@ -1,4 +1,4 @@
-from . import Parser
+import Parser
 
 
 def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes, sumo_flag):
