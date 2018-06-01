@@ -152,6 +152,7 @@ def get_final_report(vehicle_info, report, car_count, bus_count, truck_count, le
     report['average_zigzag'] = zigzag_sum / vehicle_num
     report['zigzag_per_second'] = zigzag_sum / length
     report['car_pre_second'] = vehicle_num / length
+    report['vehicle_info'] = vehicle_info
     return report
 
 
@@ -159,10 +160,13 @@ def get_statistic_report(frames):
     vehicle_info = {}
     report = {'num_of_cars': 0, 'car_pre_second': 0, 'max_speed': -sys.maxsize, 'min_ttc': sys.maxsize, 'ttc_count': 0,
               'average_speed': 0, 'average_ttc': 0, "average_zigzag": 0, 'max_zigzag': 0, 'zigzag_per_second': 0,
-              'car_distribution': 0, 'bus_distribution': 0, 'truck_distribution': 0}
+              'red_cross_count': None, 'against_direction_count': 0, 'car_distribution': 0, 'bus_distribution': 0,
+              'truck_distribution': 0, 'vehicle_info': []}
     car_count = 0
     bus_count = 0
     truck_count = 0
+    red_cross_count = -1
+    against_direction_count = 0
     vehicle_map = {"car": -1, "bus": 0, "truck": 1}
     for frame in frames:
         for vehicle in frame['objects']:
@@ -194,8 +198,17 @@ def get_statistic_report(frames):
                 vehicle_info[vid]['appearances'] += 1
                 vehicle_info[vid]['average_speed'] = average_speed / vehicle_info[vid]['appearances']
                 vehicle_info[vid]['zigzag_count'] = vehicle['change_lane_count']
+                if 'passed_in_red' in vehicle.keys() and vehicle['passed_in_red']:
+                    if red_cross_count == -1:
+                        red_cross_count = 0
+                    red_cross_count += 1
+                if 'against_direction_flag' in vehicle.keys() and vehicle['against_direction_flag']:
+                    against_direction_count += 1
+    if red_cross_count != -1:
+        report['red_cross_count'] = red_cross_count
+    report['against_direction_count'] = against_direction_count
     return get_final_report(vehicle_info, report, car_count, bus_count, truck_count, len(frames))
-#
-#
+
+
 # with open("out.json", 'r') as input:
 #     print(get_statistic_report(json.loads(input.read().replace("'", '"').replace("False", "false").replace("True", "true"))))
