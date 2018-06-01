@@ -82,6 +82,59 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         add_vehicles_to_frame(step, frames, gui_boundaries, sumo_boundaries)
         for angle in frames.keys():
             add_traffic_light_status(frames, angle, traffic_timing)
+        if prev_frames[0] is not None:
+            frames_15_fps = [all_frame_per_second(frames[0], prev_frames[0]) + [frames[0]],
+                             all_frame_per_second(frames[90], prev_frames[90]) + [frames[90]],
+                             all_frame_per_second(frames[180], prev_frames[180]) + [frames[180]],
+                             all_frame_per_second(frames[270], prev_frames[270]) + [frames[270]]]
+            for i in range(1, 16):
+                #print(frames_15_fps[3][i-1])
+                Data_Analysis.add_alerts(frames_15_fps[0][i], frames_15_fps[0][i-1], lane_ratio,
+                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                Data_Analysis.add_alerts(frames_15_fps[1][i], frames_15_fps[1][i-1], lane_ratio,
+                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                Data_Analysis.add_alerts(frames_15_fps[2][i], frames_15_fps[2][i-1], lane_ratio,
+                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                Data_Analysis.add_alerts(frames_15_fps[3][i], frames_15_fps[3][i-1], lane_ratio,
+                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                out_jsons[0].append(frames_15_fps[0][i])
+                out_jsons[1].append(frames_15_fps[1][i])
+                out_jsons[2].append(frames_15_fps[2][i])
+                out_jsons[3].append(frames_15_fps[3][i])
+        else:
+            Data_Analysis.add_alerts(frames[0], None, lane_ratio,
+                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+            Data_Analysis.add_alerts(frames[90], None, lane_ratio,
+                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+            Data_Analysis.add_alerts(frames[180], None, lane_ratio,
+                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+            Data_Analysis.add_alerts(frames[270], None, lane_ratio,
+                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+            out_jsons[0].append(frames[0])
+            out_jsons[1].append(frames[90])
+            out_jsons[2].append(frames[180])
+            out_jsons[3].append(frames[270])
+        prev_frames = frames
+        index += 1
+    return out_jsons
+
+
+def xcreate_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
+    index = 0
+    out_jsons = [[], [], [], []]
+    sumo_y_len = sumo_boundaries[0][1][1] - sumo_boundaries[0][1][0]
+    lane_ratio = gui_boundaries[0][1] / sumo_y_len
+    prev_frames = {0: None, 90: None, 180: None, 270: None}
+    stop_line = 648
+    lanes = {"right": [55, 65], "forward": [45, 55], "left": [35, 45]}
+    for step in time_step:
+        frames = {0: {"frame_index": index, "light_status": {}, "objects": []},
+                  90: {"frame_index": index, "light_status": {}, "objects": []},
+                  180: {"frame_index": index, "light_status": {}, "objects": []},
+                  270: {"frame_index": index, "light_status": {}, "objects": []}}
+        add_vehicles_to_frame(step, frames, gui_boundaries, sumo_boundaries)
+        for angle in frames.keys():
+            add_traffic_light_status(frames, angle, traffic_timing)
         Data_Analysis.add_alerts(frames[0], prev_frames[0], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
         Data_Analysis.add_alerts(frames[90], prev_frames[90], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
         Data_Analysis.add_alerts(frames[180], prev_frames[180], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
@@ -93,7 +146,6 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         prev_frames = frames
         index += 1
     return out_jsons
-
 
 def get_bbox(x_coordinate, y_coordinate, angle, gui_dimension, sumo_boundaries):
     ans = []
@@ -220,7 +272,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+# vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):
@@ -245,4 +297,4 @@ def get_simulation(duration, cars_per_second, vehicle_info):
     return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
 
 
-get_simulation(100, 0.5, vehicle_info1)
+# get_simulation(100, 0.5, vehicle_info1)
