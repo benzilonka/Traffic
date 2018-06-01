@@ -116,14 +116,21 @@ def run():
 
 if __name__ == '__main__':
     run()
+
 # with open("big_22.12.2017-10_28_44.json", 'r') as jso:
-#     with open("scheduled_11.03.2018-05_24_50.meta", 'r') as meta:
+#     with open("big_22.12.2017-10_28_44.meta", 'r') as meta:
 #         a = {'meta': meta.read(), 'json': jso.read()}
-#         with open("out.txt", 'w') as outfile:
+#         with open("out.json", 'w') as outfile:
 #             out = getFrames(a)
+#             outfile.write('[')
+#             first_flag = False
 #             for frame in out:
+#                 if first_flag:
+#                     outfile.write(',')
+#                 first_flag = True
 #                 outfile.write(str(frame))
 #                 outfile.write('\n')
+#             outfile.write(']')
 
 
 

@@ -1,3 +1,6 @@
+import json
+import sys
+
 import Parser
 
 
@@ -125,3 +128,74 @@ def search_red_light(frames):
             if current_vehicle['passed_in_red']:
                 lst.append([idx, current_vehicle['tracking_id']])
     return lst
+
+
+def get_final_report(vehicle_info, report, car_count, bus_count, truck_count, length):
+    vehicle_num = len(vehicle_info)
+    report['num_of_cars'] = vehicle_num
+    report['car_distribution'] = car_count / vehicle_num
+    report['bus_distribution'] = bus_count / vehicle_num
+    report['truck_distribution'] = truck_count / vehicle_num
+    speed_sum = 0
+    ttc_sum = 0
+    ttc_count = 0
+    zigzag_sum = 0
+    for vid in vehicle_info.keys():
+        speed_sum += vehicle_info[vid]['average_speed']
+        zigzag_sum += vehicle_info[vid]['zigzag_count']
+        if vehicle_info[vid]['average_ttc'] != 0:
+            ttc_sum += vehicle_info[vid]['average_ttc']
+            ttc_count += 1
+    report['average_speed'] = speed_sum / vehicle_num
+    report['average_ttc'] = ttc_sum / ttc_count
+    report['ttc_count'] = ttc_count
+    report['average_zigzag'] = zigzag_sum / vehicle_num
+    report['zigzag_per_second'] = zigzag_sum / length
+    report['car_pre_second'] = vehicle_num / length
+    return report
+
+
+def get_statistic_report(frames):
+    vehicle_info = {}
+    report = {'num_of_cars': 0, 'car_pre_second': 0, 'max_speed': -sys.maxsize, 'min_ttc': sys.maxsize, 'ttc_count': 0,
+              'average_speed': 0, 'average_ttc': 0, "average_zigzag": 0, 'max_zigzag': 0, 'zigzag_per_second': 0,
+              'car_distribution': 0, 'bus_distribution': 0, 'truck_distribution': 0}
+    car_count = 0
+    bus_count = 0
+    truck_count = 0
+    vehicle_map = {"car": -1, "bus": 0, "truck": 1}
+    for frame in frames:
+        for vehicle in frame['objects']:
+            report['max_speed'] = max(vehicle['speed'], report['max_speed'])
+            ttc = 0
+            ttc_holder = sys.maxsize
+            ttc_count = 0
+            if vehicle['ttc'] != -1:
+                ttc_holder = vehicle['ttc']
+                ttc = ttc_holder
+                ttc_count = 1
+            report['min_ttc'] = min(ttc_holder, report['min_ttc'])
+            report['max_zigzag'] = max(vehicle['change_lane_count'], report['max_zigzag'])
+            vid = vehicle['tracking_id']
+            if vid not in vehicle_info.keys():
+                vehicle_info[vid] = {'average_speed': vehicle['speed'], 'appearances': 1,
+                                     'average_ttc': ttc, 'ttc_count': ttc_count, 'zigzag_count': 0}
+                vehicle_type = vehicle_map[vehicle['type']]
+                car_count += (0.5 * ((vehicle_type ** 2) - vehicle_type))
+                bus_count += (-(vehicle_type ** 2) + 1)
+                truck_count += (0.5 * ((vehicle_type ** 2) + vehicle_type))
+            else:
+                average_ttc = vehicle_info[vid]['average_ttc'] * vehicle_info[vid]['ttc_count']
+                average_ttc += ttc
+                vehicle_info[vid]['ttc_count'] += ttc_count
+                vehicle_info[vid]['average_ttc'] = average_ttc / max(vehicle_info[vid]['ttc_count'], 1)
+                average_speed = vehicle_info[vid]['average_speed'] * vehicle_info[vid]['appearances']
+                average_speed += vehicle['speed']
+                vehicle_info[vid]['appearances'] += 1
+                vehicle_info[vid]['average_speed'] = average_speed / vehicle_info[vid]['appearances']
+                vehicle_info[vid]['zigzag_count'] = vehicle['change_lane_count']
+    return get_final_report(vehicle_info, report, car_count, bus_count, truck_count, len(frames))
+#
+#
+# with open("out.json", 'r') as input:
+#     print(get_statistic_report(json.loads(input.read().replace("'", '"').replace("False", "false").replace("True", "true"))))
