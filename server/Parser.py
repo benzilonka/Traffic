@@ -30,7 +30,10 @@ def fix_file(data, info):
         Data_Analysis.add_alerts(fixed_frame, prev_frame, lane_ratio, REACT_DIRECTION, 0, lane_stop, lanes, False)
         fixed_frames.append(fixed_frame)
         prev_frame = fixed_frame
-    return [fixed_frames, Data_Analysis.get_statistic_report(fixed_frames)]
+    return {
+        'frames': fixed_frames, 
+        'statistics':Data_Analysis.get_statistic_report(fixed_frames)
+    }
 
 
 def strip_json(js_file):

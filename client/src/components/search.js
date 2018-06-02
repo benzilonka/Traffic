@@ -189,7 +189,7 @@ class Search extends Component {
         }
 
         let radios = (<span></span>);
-        if(this.state.selectedValue != 'bool') {
+        if(this.state.selectedValue !== 'bool') {
             radios = (
                 <RadioGroup name="values" selectedValue={this.state.selectedValue} onChange={this.handleValueChange}>
                     <Radio value="equal" /> Equal to

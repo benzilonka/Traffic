@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 import React, { Component } from 'react';
 import Vehicle from './vehicle.js';
+import Statistics from './statistics.js';
 import TrafficLight from './TrafficLight.js';
 import '../styles/Map.css';
 import loading_gif from '../images/loading.gif';
@@ -58,8 +59,55 @@ let loadingStyle = {
   width: MAP_WIDTH + 'px'
 };
 
-class Map extends Component { 
-  
+
+
+
+
+class Map extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      show_vehicle_stats: false,
+      vehicle_statistics: [null, null, null, null]
+    };
+  } 
+
+  showVehicleStatistics = () => {
+    this.setState({
+      show_vehicle_stats: true
+    });
+  }
+
+  hideVehicleStatistics = () => {
+    this.setState({
+      show_vehicle_stats: false
+    });
+  }
+
+  toggleVehicleStatistics = (statistics, i, tracking_id) => {
+    let stats = this.state.vehicle_statistics;
+    stats[i] = statistics;
+    this.setState({
+      vehicle_statistics: stats
+    });
+    this.props.highlightVehicleFunc(tracking_id);
+  }
+
+  shouldComponentUpdate = (nextProps, nextState) => {
+      return !this.state.mouseDown;
+  }
+  onMouseDown = () => {
+    this.setState({
+      mouseDown: true
+    });
+  }
+  onMouseUp = () => {
+    this.setState({
+      mouseDown: false
+    });
+  }
+
   render() {
 
     let vehicles = [[], [], [], []];
@@ -67,6 +115,7 @@ class Map extends Component {
     try {
       if(this.props.currentFrame != null) {
         let self = this;
+        let i = 0;
         this.props.frames.map(function(directionFrames, index) {
           if(directionFrames != null && directionFrames.cars != null) {
             if(directionFrames.cars[self.props.currentFrame] != null) {
@@ -79,8 +128,19 @@ class Map extends Component {
                     highlight = true;
                   }
                 }
+                let vehicle_stats = null;
+                if(self.props.statistics[index] != null) {
+                  vehicle_stats = self.props.statistics[index].vehicle_info[vehicle.tracking_id];
+                }
                 return (
-                    <Vehicle key={vehicle.key} 
+                  <div 
+                      onClick={(e) => self.toggleVehicleStatistics(vehicle_stats, index, vehicle.tracking_id)}
+                      onMouseDown={self.onMouseDown}
+                      onMouseUp={self.onMouseUp}
+                      onMouseLeave={self.onMouseUp}
+                      key={vehicle.key}
+                      >
+                    <Vehicle
                              x={x}
                              y={y-10} 
                              type={vehicle.type}
@@ -93,6 +153,7 @@ class Map extends Component {
                              highlight={highlight}
                              >
                     </Vehicle>
+                  </div>
                 );
               });
               vehicles[index] = _vehicles;
@@ -122,6 +183,39 @@ class Map extends Component {
       );
     }
 
+    let vehicle_statistics = [];
+    for(let i = 0; i < 4; i++) {
+      if(this.state.vehicle_statistics[i] != null) {
+        let stats = [];
+        let j = 0;
+        for (let key in this.state.vehicle_statistics[i]) {
+          let value = this.state.vehicle_statistics[i][key];
+          if(!isNaN(value)) {
+            value = parseFloat(value, 10).toFixed(2);
+          }
+          stats.push({
+              name: key,
+              value: value,
+              key: j++
+          });
+        }
+        vehicle_statistics[i] = stats.map(function(stat) {
+            return (
+                <p key={stat.key}>{stat.name}: {stat.value}</p>
+            )
+        });
+  
+        let statisticsStyle= {            
+            transform: 'rotate(' + (90 * i) + 'deg)'
+        };
+        vehicle_statistics[i] = (
+          <div className="vehicle-statistics" style={statisticsStyle} onClick={(e) => this.toggleVehicleStatistics(null, i, -1)}>       
+            {vehicle_statistics[i]} 
+          </div>
+        );
+      }
+    }
+
 
     return (
       <div>
@@ -129,12 +223,20 @@ class Map extends Component {
           <div className="Map-center"></div>
           <div className="lanes-disp">
             <div style={lane0Style} className="lane-disp">
+              <Statistics statistics={this.props.statistics[0]} i={0}></Statistics>
+              {vehicle_statistics[0]}
             </div>
             <div style={lane1Style} className="lane-disp">
+              <Statistics statistics={this.props.statistics[1]} i={1}></Statistics>              
+              {vehicle_statistics[1]}
             </div>
             <div style={lane2Style} className="lane-disp">
+              <Statistics statistics={this.props.statistics[2]} i={2}></Statistics>              
+              {vehicle_statistics[2]}
             </div>
             <div style={lane3Style} className="lane-disp">
+              <Statistics statistics={this.props.statistics[3]} i={3}></Statistics>              
+              {vehicle_statistics[3]}
             </div>
             <div style={lanesIntersect}>
             </div>

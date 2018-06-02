@@ -32,3 +32,51 @@
 .Controls .form-group {
     margin-bottom: 0;
 }
+
+.statistics {
+    position: relative !important;
+    background-color: transparent !important;
+    right: -71px;
+    top: 0;
+    width: 330px;
+    height: 330px;
+    z-index: 2;
+}
+.statistics .text {   
+    width: 100%;
+    padding: 20px;
+    background-color: transparent !important;
+}
+.statistics .text p, .vehicle-statistics p {
+    margin: 0;
+    font-size: 13px;
+}
+
+.show-stats {
+    position: absolute !important;
+    background-color: transparent !important;
+    background-size: 100%;
+    border-radius: 50%;
+    left: 20px;
+    top: 40px;
+    width: 40px;
+    height: 40px;
+    z-index: 1;
+}
+.vehicle-statistics {
+    position: relative;
+    top: 110px;
+    left: 130px;
+    width: 200px;
+    min-height: 50px;
+    background-color: white;
+    border-radius: 5px;
+    padding: 8px;
+    cursor: pointer;
+}
+.vehicle-statistics::after {
+    content: 'x';
+    position: absolute;
+    right: 7px;
+    top: 0px;
+}

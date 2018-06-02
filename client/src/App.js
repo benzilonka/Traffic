@@ -38,6 +38,7 @@ class App extends Component {
     super(props);
     this.state = {
       frames: [null, null, null, null],
+      statistics: [null, null, null, null],
       urls: [null, null, null, null],
       playing: false,
       played: 0,
@@ -80,6 +81,7 @@ class App extends Component {
     this.setState({
       frames: [null, null, null, null],
       urls: [null, null, null, null],
+      statistics: [null, null, null, null],
       selectedJunction: null
     });
   };
@@ -177,7 +179,11 @@ class App extends Component {
     })
     .then(function (response) {        
       try {
-        let _frames = self.state.frames;
+        let _frames = self.state.frames;        
+        if(response.data.hasOwnProperty('statistics')){
+          self.storeStatistics(response.data.statistics, i);
+          response.data = response.data.frames;
+        }
         _frames[i] = self.parseFrames(response.data, i);        
         let size = 0;
         _frames.map(function(frames_for_direction) {
@@ -207,6 +213,7 @@ class App extends Component {
     };
     json.map(function(frame) {
       let cars = [];
+      //console.log(frame);
       frame.objects.map(function(car) {
         cars.push({
           y: Math.floor(car.bounding_box[1] / 2),
@@ -288,7 +295,8 @@ class App extends Component {
   getDatasetFiles = (dataset_id, callback = null) => {
     this.setState({
       frames: [null, null, null, null],
-      urls: [null, null, null, null]
+      urls: [null, null, null, null],
+      statistics: [null, null, null, null],
     });
     let self = this;
     axios.post(SERVER_URL, {
@@ -300,13 +308,18 @@ class App extends Component {
       try {
         let _frames = [];
         let i = 0;
-        response.data.map(function(frames_for_direction) {
-          _frames[i] = self.parseFrames(frames_for_direction, i);
+        response.data.map(function(data_for_direction) {                
+          if(data_for_direction.hasOwnProperty('statistics')){
+            self.storeStatistics(data_for_direction.statistics, i);
+            data_for_direction = data_for_direction.frames;
+          }
+          _frames[i] = self.parseFrames(data_for_direction, i);
           i++;
           return null;
         });
         let size = 0;
         _frames.map(function(frames_for_direction) {
+          console.log(frames_for_direction);
           if(frames_for_direction.cars.length > size) {
             size = frames_for_direction.cars.length;
           }
@@ -516,6 +529,14 @@ class App extends Component {
     });
   };
 
+  storeStatistics = (statistics, i) => {
+    let curr_stats = this.state.statistics;
+    curr_stats[i] = statistics;
+    this.setState({
+      statistics: curr_stats
+    });
+  }
+
   render() {
     let curr_tab;
     switch(this.state.tab) {
@@ -527,6 +548,7 @@ class App extends Component {
                 <Col xs={7}>
                   <Map ref="map"
                       frames={this.state.frames}
+                      statistics={this.state.statistics}
                       currentFrame={this.state.currentFrame}
                       playing={this.state.playing}
                       played ={this.state.played}
@@ -536,6 +558,7 @@ class App extends Component {
                       showSpeed={this.state.showSpeed}
                       showTTC={this.state.showTTC}
                       showDistance={this.state.showDistance}
+                      highlightVehicleFunc={this.highlightVehicle.bind(this)}
                       highlightVehicle={this.state.highlightVehicle}>
                   </Map>
                 </Col>

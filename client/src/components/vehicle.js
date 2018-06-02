@@ -5,8 +5,10 @@ import '../styles/Map.css';
 //import bus_image from '../images/bus.png';
 
 class Vehicle extends Component {
-    
+
   render() {
+
+    
     let x = this.props.x;
     if(x < 17) {
       x *= 7 / 4;
