@@ -103,18 +103,29 @@ def get_vehicle_lane(vehicle, lanes):
     return lane
 
 
-def is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes):
+def get_vehicle_by_id(frame):
     vehicles = frame['objects']
-    for idx, current_vehicle in enumerate(vehicles):
+    ans = {}
+    for vehicle in vehicles:
+        ans[vehicle['tracking_id']] = vehicle
+    return ans
+
+
+def is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes):
+    vehicles = get_vehicle_by_id(frame)
+    if prev_frame is not None:
+        prev_vehicles = get_vehicle_by_id(prev_frame)
+    for idx in vehicles.keys():
         vehicles[idx]['passed_in_red'] = False
+        current_vehicle = vehicles[idx]
         y_loc = current_vehicle['bounding_box'][1]
         vehicleLane = get_vehicle_lane(current_vehicle, lanes)
         if vehicleLane != "" and frame["light_status"][vehicleLane] == "red" and stop_line < y_loc:
             # We don't have any info before the first frame and before there was data on the current vehicle
-            if prev_frame is not None and idx < len(prev_frame['objects']):
+            if prev_frame is not None and idx in prev_vehicles.keys():
                 # If in the frame before (~0.06 sec before) the light was red too and the vehicle located before
                 # the stop line, then the vehicle passed in red light and we'll mark it
-                prev_y_loc = prev_frame['objects'][idx]['bounding_box'][1]
+                prev_y_loc = prev_vehicles[idx]['bounding_box'][1]
                 if prev_frame['light_status'][vehicleLane] == "red" and stop_line >= prev_y_loc:
                     vehicles[idx]['passed_in_red'] = True
     return frame
@@ -210,5 +221,5 @@ def get_statistic_report(frames):
     return get_final_report(vehicle_info, report, car_count, bus_count, truck_count, len(frames))
 
 
-# with open("out.json", 'r') as input:
+# with open("out_0.json", 'r') as input:
 #     print(get_statistic_report(json.loads(input.read().replace("'", '"').replace("False", "false").replace("True", "true"))))

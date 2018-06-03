@@ -88,7 +88,6 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
                              all_frame_per_second(frames[180], prev_frames[180]) + [frames[180]],
                              all_frame_per_second(frames[270], prev_frames[270]) + [frames[270]]]
             for i in range(1, 16):
-                #print(frames_15_fps[3][i-1])
                 Data_Analysis.add_alerts(frames_15_fps[0][i], frames_15_fps[0][i-1], lane_ratio,
                                          SUMO_DIRECTION, 0, stop_line, lanes, True)
                 Data_Analysis.add_alerts(frames_15_fps[1][i], frames_15_fps[1][i-1], lane_ratio,
@@ -146,6 +145,7 @@ def xcreate_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         prev_frames = frames
         index += 1
     return out_jsons
+
 
 def get_bbox(x_coordinate, y_coordinate, angle, gui_dimension, sumo_boundaries):
     ans = []
@@ -252,7 +252,6 @@ def sumo_parse(in_file_name, net_file_name, gui_boundaries, sumo_boundaries):
     file = minidom.parse(in_file_name)
     time_step = file.getElementsByTagName('timestep')
     jsons_ans = create_frames(time_step, get_light_timing(net_file_name), gui_boundaries, sumo_boundaries)
-   # jsons_ans = add_frame_per_second(jsons_ans)
     write_jsons_to_files(jsons_ans, ["data_set_0.json", "data_set_1.json", "data_set_2.json", "data_set_3.json"])
     return jsons_ans
 
