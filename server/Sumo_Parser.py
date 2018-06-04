@@ -43,6 +43,7 @@ def all_frame_per_second(current_frame, prev_frame):
             vehicle["bounding_box"][0] += vehicles_info[vehicle_id]["x_delta"] * i
             vehicle["bounding_box"][1] += vehicles_info[vehicle_id]["y_delta"] * i
             frame["objects"].append(vehicle)
+        frame["objects"].reverse()
         frames_ans.append(frame)
     current_frame["frame_index"] = prev_frame["frame_index"] + 15
     return frames_ans

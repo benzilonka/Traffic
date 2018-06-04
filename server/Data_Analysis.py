@@ -5,18 +5,25 @@ import Parser
 
 
 def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes, sumo_flag):
-    add_ttc(frame, lane_ratio)
+    add_ttc_tti(frame, lane_ratio, stop_line)
     add_zigzag_count(frame, prev_frame, direction, ver_or_hor)
     if sumo_flag:
         is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes)
 
 
-def add_ttc(frame, lane_ratio):
+def calc_tti(vehicle, stop_line, lane_ratio):
+    if vehicle['bounding_box'][1] > stop_line:
+        return -1
+    return (stop_line - vehicle['bounding_box'][1]) / (vehicle['speed'] * lane_ratio)
+
+
+def add_ttc_tti(frame, lane_ratio, stop_line):
     vehicles = frame['objects']
     i = 0
     for vehicle in vehicles:
         frame['objects'][i]['distance'] = get_distance(vehicle, vehicles)
         frame['objects'][i]['ttc'] = calc_ttc(vehicle, vehicles, lane_ratio)
+        frame['objects'][i]['tti'] = calc_tti(vehicle, stop_line, lane_ratio)
         i = i + 1
     return frame
 
@@ -112,6 +119,7 @@ def get_vehicle_by_id(frame):
 
 
 def is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes):
+    prev_vehicles = {}
     vehicles = get_vehicle_by_id(frame)
     if prev_frame is not None:
         prev_vehicles = get_vehicle_by_id(prev_frame)
@@ -221,5 +229,6 @@ def get_statistic_report(frames):
     return get_final_report(vehicle_info, report, car_count, bus_count, truck_count, len(frames))
 
 
-# with open("out_0.json", 'r') as input:
-#     print(get_statistic_report(json.loads(input.read().replace("'", '"').replace("False", "false").replace("True", "true"))))
+
+# with open("dataset_0.json", 'r') as input:
+#    print(get_statistic_report(json.loads(input.read().replace("'", '"').replace("False", "false").replace("True", "true"))))

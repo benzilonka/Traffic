@@ -114,21 +114,21 @@ def run():
     httpd.serve_forever()
 
 
-if __name__ == '__main__':
-    run()
+# if __name__ == '__main__':
+#     run()
 
-# with open("dataset_0.json", 'r') as jso:
-#     with open("out_0.json", 'w') as outfile:
-#         outfile.write('[')
-#         first_flag = False
-#         a= (json.loads(jso.read().replace("'", '"').replace("False", "false").replace("True", "true")))
-#         for frame in a:
-#             if first_flag:
-#                 outfile.write(',')
-#             first_flag = True
-#             outfile.write(str(frame))
-#             outfile.write('\n')
-#         outfile.write(']')
+with open("dataset_3.json", 'r') as jso:
+    with open("out_3.json", 'w') as outfile:
+        outfile.write('[')
+        first_flag = False
+        a= (json.loads(jso.read().replace("'", '"').replace("False", "false").replace("True", "true")))
+        for frame in a:
+            if first_flag:
+                outfile.write(',')
+            first_flag = True
+            outfile.write(str(frame))
+            outfile.write('\n')
+        outfile.write(']')
 
 
 

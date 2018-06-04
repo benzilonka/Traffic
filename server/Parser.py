@@ -32,7 +32,7 @@ def fix_file(data, info):
         prev_frame = fixed_frame
     return {
         'frames': fixed_frames, 
-        'statistics':Data_Analysis.get_statistic_report(fixed_frames)
+        'statistics': Data_Analysis.get_statistic_report(fixed_frames)
     }
 
 
