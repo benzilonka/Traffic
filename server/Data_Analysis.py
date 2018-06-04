@@ -12,7 +12,7 @@ def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, 
 
 
 def calc_tti(vehicle, stop_line, lane_ratio):
-    if vehicle['bounding_box'][1] > stop_line:
+    if vehicle['bounding_box'][1] > stop_line or vehicle['speed'] == 0:
         return -1
     return (stop_line - vehicle['bounding_box'][1]) / (vehicle['speed'] * lane_ratio)
 
