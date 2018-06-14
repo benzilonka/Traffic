@@ -10,7 +10,6 @@ import Sumo_Parser
 
 db = DBL.DB_Layer()
 
-
 def getFrames(data):
     return Parser.fix_file(data['meta'], json.loads(data['json']))
 
@@ -118,13 +117,13 @@ if __name__ == '__main__':
     run()
 
 # with open("big_22.12.2017-10_28_44.json", 'r') as jso:
-#     with open("big_22.12.2017-10_28_44.meta", 'r') as meta:
+#     with open("scheduled_11.03.2018-08_21_17.meta", 'r') as meta:
 #         a = {'meta': meta.read(), 'json': jso.read()}
 #         with open("out.json", 'w') as outfile:
 #             out = getFrames(a)
 #             outfile.write('[')
 #             first_flag = False
-#             for frame in out:
+#             for frame in out['frames']:
 #                 if first_flag:
 #                     outfile.write(',')
 #                 first_flag = True

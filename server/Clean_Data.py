@@ -87,7 +87,7 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         #   Smooth the locations in current path
         vehiclesPath[path] = smoothData(vehiclesPath[path])
 
-    # Fix and handle speeds of vehicles from given data
+        # Fix and handle speeds of vehicles from given data
         # Fourth Stage:
         #   We'll fix logically impossible high sampled speeds.
         index = 0
@@ -100,6 +100,7 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         #   We'll check that the difference in speed between two consecutive frames is logical and fix if needed
         vehiclesSpeed[path] = checkForLegalDifferSpeed(vehiclesSpeed[path], vehiclesPath[path])
     return vehiclesPath, vehiclesSpeed
+
 
 def smoothData(path):
     points = np.array(path)
@@ -114,7 +115,7 @@ def smoothData(path):
         y = points[:, 1]
         # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
         if numOfPoints > threshold:
-            numOfPoints = int(numOfPoints/2)
+            numOfPoints = int(numOfPoints / 2)
         # this param in savgol_filter has to be a positive odd number
         if numOfPoints % 2 == 0:
             numOfPoints -= 1
@@ -139,32 +140,36 @@ def smoothData(path):
     else:
         return path
 
+
 # Calculate the distance between two locations using Pythagorean Theorem
 def calcDistance(startLocation, endLocation):
     xDistance = abs(endLocation[0] - startLocation[0])
     yDistance = abs(endLocation[1] - startLocation[1])
-    return math.sqrt(xDistance**2 + yDistance**2)
+    return math.sqrt(xDistance ** 2 + yDistance ** 2)
+
 
 def checkForLegalDifferSpeed(vehicleSpeedList, vehiclePath):
     # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
     deltaTime = 1. / 15
     index = 0
-    while index < len(vehiclePath)-1:
-        distance = calcDistance(vehiclePath[index], vehiclePath[index+1])
-        suggestedVelocity = distance/deltaTime
+    while index < len(vehiclePath) - 1:
+        distance = calcDistance(vehiclePath[index], vehiclePath[index + 1])
+        suggestedVelocity = distance / deltaTime
         fittedVelocity = checkForLegalSpeedAndFit(suggestedVelocity)
         vehicleSpeedList[index] = fittedVelocity
         index += 1
     return vehicleSpeedList
 
+
 def checkForLegalSpeedAndFit(currentSpeed):
     # max speed is in km/h
     maxSpeed = 120.0
     # max legal speed is in m/s
-    maxLegalSpeedPerSec = maxSpeed/3.6
+    maxLegalSpeedPerSec = maxSpeed / 3.6
     if currentSpeed > maxLegalSpeedPerSec:
         currentSpeed = maxLegalSpeedPerSec
     return currentSpeed
+
 
 def checkInRangeAndFit(start, end, currentLocation):
     # check x/y axis
@@ -183,6 +188,7 @@ def checkInRangeAndFit(start, end, currentLocation):
                 newLocation = end
     return newLocation
 
+
 def linearMovement(start, end, path):
     index = 1
     if len(path) < 2:
@@ -192,29 +198,30 @@ def linearMovement(start, end, path):
     directionY = checkForDirection(start, end, 1)
     if directionX == "unknown" or directionY == "unknown":
         if directionX == "unknown" and directionY == "unknown":
-            for i in range(index, len(path)-1):
-                path[i] = path[i-1]
+            for i in range(index, len(path) - 1):
+                path[i] = path[i - 1]
         elif directionX == "unknown" and not (directionY == "unknown"):
-            for i in range(index, len(path)-1):
-                path[i][0] = path[i-1][0]
+            for i in range(index, len(path) - 1):
+                path[i][0] = path[i - 1][0]
         else:
-            for i in range(index, len(path)-1):
-                path[i][1] = path[i-1][1]
+            for i in range(index, len(path) - 1):
+                path[i][1] = path[i - 1][1]
     else:
         index = 0
         path = linearMovementHelper(directionX, directionY, path, index)
     return path
 
+
 def linearMovementHelper(directionX, directionY, path, index):
     # No need to change start and end locations
-    while index < len(path)-1:
+    while index < len(path) - 1:
         # if isOK = True, move to the next index else 'fix' the location in index+1
-        isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
+        isOkX = checkIfLinear(path[index], path[index + 1], directionX, 0)
         if not isOkX:
-            path[index+1][0] = path[index][0]
-        isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
+            path[index + 1][0] = path[index][0]
+        isOkY = checkIfLinear(path[index], path[index + 1], directionY, 1)
         if not isOkY:
-            path[index+1][1] = path[index][1]
+            path[index + 1][1] = path[index][1]
         index += 1
     return path
 
@@ -234,7 +241,7 @@ def checkIfLinear(locFrom, locTo, direction, xORy):
     if direction == "up":
         if locFrom[xORy] > locTo[xORy]:
             ans = False
-    else: # direction = down
+    else:  # direction = down
         if locTo[xORy] > locFrom[xORy]:
             ans = False
     return ans

@@ -166,7 +166,10 @@ def get_final_report(vehicle_info, report, car_count, bus_count, truck_count, le
             ttc_sum += vehicle_info[vid]['average_ttc']
             ttc_count += 1
     report['average_speed'] = speed_sum / vehicle_num
-    report['average_ttc'] = ttc_sum / ttc_count
+    if ttc_count == 0:
+        report['average_ttc'] = None
+    else:
+        report['average_ttc'] = ttc_sum / ttc_count
     report['ttc_count'] = ttc_count
     report['average_zigzag'] = zigzag_sum / vehicle_num
     report['zigzag_per_second'] = zigzag_sum / length
@@ -201,7 +204,7 @@ def get_statistic_report(frames):
             report['max_zigzag'] = max(vehicle['change_lane_count'], report['max_zigzag'])
             vid = vehicle['tracking_id']
             if vid not in vehicle_info.keys():
-                vehicle_info[vid] = {'average_speed': vehicle['speed'], 'appearances': 1,
+                vehicle_info[vid] = {'vehicle_id': vid, 'average_speed': vehicle['speed'], 'appearances': 1,
                                      'average_ttc': ttc, 'ttc_count': ttc_count, 'zigzag_count': 0}
                 vehicle_type = vehicle_map[vehicle['type']]
                 car_count += (0.5 * ((vehicle_type ** 2) - vehicle_type))
