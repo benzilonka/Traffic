@@ -1,10 +1,8 @@
 import unittest
-
+import Calibiration_1
 import cv2
 import numpy as np
-
-from server.Parser import *
-from server.Calibration_1 import *
+import Parser
 
 class TestCalibiration1 (unittest.TestCase):
 
@@ -18,12 +16,12 @@ class TestCalibiration1 (unittest.TestCase):
         {'objects': [{'confidence': 0.72, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 0, 'speed': 0.0, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 232, 91, 131], 'new': False, 'counted': False}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 8, 'speed': 8.204357854743904, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [372, 331, 70, 52], 'new': False, 'counted': True}, {'confidence': 0.77, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 1, 'speed': 18.51134117483986, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [413, 290, 49, 35], 'new': False, 'counted': False}], 'frame_index': 6348753},  
         {'objects': [{'confidence': 0.7, 'type': 'bus', 'static': True, 'created_at': '2017-12-28 07:39:00.933165', 'times_lost_by_convnet': 0, 'speed': 0.0, 'lost': False, 'alert_tags': [], 'tracking_id': 26598, 'bounding_box': [525, 232, 91, 134], 'new': False, 'counted': False}, {'confidence': 0.82, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:02.417256', 'times_lost_by_convnet': 10, 'speed': 8.614160325384688, 'lost': False, 'alert_tags': [], 'tracking_id': 26609, 'bounding_box': [370, 332, 70, 52], 'new': False, 'counted': True}, {'confidence': 0.76, 'type': 'car', 'static': False, 'created_at': '2017-12-28 07:40:03.798450', 'times_lost_by_convnet': 1, 'speed': 23.706263884080034, 'lost': False, 'alert_tags': [], 'tracking_id': 26610, 'bounding_box': [410, 292, 52, 35], 'new': False, 'counted': False}], 'frame_index': 6348759}
         ]
-        transformation_matrix = calibrate(self.lanes)
+        transformation_matrix = Calibiration_1.calibrate(self.lanes)
         
 
         for frame in frames:
-            vehicles= get_vehicles(frame)
-            fixed_frame = wrap(frame,transformation_matrix)
+            vehicles= Parser.get_vehicles(frame)
+            fixed_frame = Calibiration_1.wrap(frame,transformation_matrix)
             i=0
             for vehicle in vehicles:
 
