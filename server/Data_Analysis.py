@@ -4,11 +4,11 @@ import sys
 import Parser
 
 
-def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes, sumo_flag):
+def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes_end, lanes_start, sumo_flag):
     add_ttc_tti(frame, lane_ratio, stop_line)
-    add_zigzag_count(frame, prev_frame, direction, ver_or_hor)
+    add_zigzag_count(frame, prev_frame, direction, ver_or_hor, lanes_end, lanes_start)
     if sumo_flag:
-        is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes)
+        is_vehicle_passed_in_red_light(frame, prev_frame, stop_line, lanes_end)
 
 
 def calc_tti(vehicle, stop_line, lane_ratio):
@@ -35,21 +35,33 @@ def add_fields(frame):
         vehicle["against_direction_flag"] = False
 
 
-def add_zigzag_count(frame, prev_frame, direction, per_or_hor):
+def is_different_lane(curr_pos, prev_pos):
+    lane_end = Parser.RECT_WIDTH / 3
+    lane_start = 0
+    for i in range(3):
+        if lane_start < curr_pos < lane_end and lane_start < prev_pos < lane_end:
+            return False
+        lane_start = lane_end
+        lane_end += Parser.RECT_WIDTH / 3
+    return True
+
+
+def add_zigzag_count(frame, prev_frame, direction, per_or_hor, lanes_end, lanes_start):
     add_fields(frame)
     if prev_frame is not None:
         for current_vehicle in frame['objects']:
             for prev_vehicle in prev_frame['objects']:
                 if current_vehicle['tracking_id'] == prev_vehicle['tracking_id']:
                     current_vehicle["change_lane_count"] = prev_vehicle["change_lane_count"]
-                    curr_pos = current_vehicle['bounding_box'][per_or_hor]
-                    prev_pos = prev_vehicle['bounding_box'][per_or_hor]
-                    if curr_pos != prev_pos:
+                    if get_vehicle_lane(current_vehicle, lanes_start) != get_vehicle_lane(prev_vehicle, lanes_start) \
+                            or get_vehicle_lane(current_vehicle, lanes_end) != get_vehicle_lane(prev_vehicle, lanes_end):
                         current_vehicle["change_lane_count"] += 1
-                    curr_pos = current_vehicle['bounding_box'][1 - per_or_hor]
-                    prev_pos = prev_vehicle['bounding_box'][1 - per_or_hor]
-                    if curr_pos * direction < prev_pos * direction:
-                        current_vehicle["against_direction_flag"] = True
+                    # curr_pos = current_vehicle['bounding_box'][1 - per_or_hor]
+                    # prev_pos = prev_vehicle['bounding_box'][1 - per_or_hor]
+                    # if (curr_pos * direction) + 10 < prev_pos * direction:
+                    #     current_vehicle["against_direction_flag"] = True
+                    # else:
+                    #     current_vehicle["against_direction_flag"] = False
     return frame
 
 
@@ -59,7 +71,7 @@ def calc_ttc(vehicle, vehicles, lane_ratio):
     distance_and_speed = get_distance_and_speed(vehicle, vehicles)
     if distance_and_speed[0] <= 0:
         return -1
-    if vehicle['speed'] == 0 or vehicle['speed'] <= distance_and_speed[1]:
+    if vehicle['speed'] <= 0 or vehicle['speed'] <= distance_and_speed[1]:
         return -1
     else:
         ttc = float(distance_and_speed[0] / ((vehicle['speed'] * lane_ratio) - (distance_and_speed[1] * lane_ratio)))

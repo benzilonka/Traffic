@@ -18,7 +18,7 @@ def fix_file(data, info):
     # need to fix and get the ratio from the data
     lane_ratio = 5
     lane_stop = 650
-    lanes = {"right": [49, 60], "forward": [38, 49], "left": [27, 38]}
+    react_lanes = {"right": [0, 11.66], "forward": [11.66, 23.33], "left": [23.33, 35]}
     for frame in jsons:
         if frame:
             frame = strip_json(frame)
@@ -27,7 +27,8 @@ def fix_file(data, info):
     prev_frame = None
     for frame in frames:
         fixed_frame = Calibration_1.wrap(frame, transformation_matrix)
-        Data_Analysis.add_alerts(fixed_frame, prev_frame, lane_ratio, REACT_DIRECTION, 0, lane_stop, lanes, False)
+        Data_Analysis.add_alerts(fixed_frame, prev_frame, lane_ratio, REACT_DIRECTION, 0, lane_stop, react_lanes,
+                                 react_lanes, False)
         fixed_frames.append(fixed_frame)
         prev_frame = fixed_frame
     return {

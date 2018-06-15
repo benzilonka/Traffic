@@ -75,6 +75,7 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
     prev_frames = {0: None, 90: None, 180: None, 270: None}
     stop_line = 648
     lanes = {"right": [55, 65], "forward": [45, 55], "left": [35, 45]}
+    lanes_react = {"right": [0, 11.66], "forward": [11.66, 23.33], "left": [23.33, 35]}
     for step in time_step:
         frames = {0: {"frame_index": index, "light_status": {}, "objects": []},
                   90: {"frame_index": index, "light_status": {}, "objects": []},
@@ -90,26 +91,26 @@ def create_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
                              all_frame_per_second(frames[270], prev_frames[270]) + [frames[270]]]
             for i in range(1, 16):
                 Data_Analysis.add_alerts(frames_15_fps[0][i], frames_15_fps[0][i-1], lane_ratio,
-                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                         SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
                 Data_Analysis.add_alerts(frames_15_fps[1][i], frames_15_fps[1][i-1], lane_ratio,
-                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                         SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
                 Data_Analysis.add_alerts(frames_15_fps[2][i], frames_15_fps[2][i-1], lane_ratio,
-                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                         SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
                 Data_Analysis.add_alerts(frames_15_fps[3][i], frames_15_fps[3][i-1], lane_ratio,
-                                         SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                         SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
                 out_jsons[0].append(frames_15_fps[0][i])
                 out_jsons[1].append(frames_15_fps[1][i])
                 out_jsons[2].append(frames_15_fps[2][i])
                 out_jsons[3].append(frames_15_fps[3][i])
         else:
             Data_Analysis.add_alerts(frames[0], None, lane_ratio,
-                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                     SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
             Data_Analysis.add_alerts(frames[90], None, lane_ratio,
-                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                     SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
             Data_Analysis.add_alerts(frames[180], None, lane_ratio,
-                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                     SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
             Data_Analysis.add_alerts(frames[270], None, lane_ratio,
-                                     SUMO_DIRECTION, 0, stop_line, lanes, True)
+                                     SUMO_DIRECTION, 0, stop_line, lanes, lanes_react, True)
             out_jsons[0].append(frames[0])
             out_jsons[1].append(frames[90])
             out_jsons[2].append(frames[180])
@@ -127,6 +128,7 @@ def xcreate_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
     prev_frames = {0: None, 90: None, 180: None, 270: None}
     stop_line = 648
     lanes = {"right": [55, 65], "forward": [45, 55], "left": [35, 45]}
+    lanes_react = {"right": [0, 11.66], "forward": [11.66, 23.33], "left": [23.33, 35]}
     for step in time_step:
         frames = {0: {"frame_index": index, "light_status": {}, "objects": []},
                   90: {"frame_index": index, "light_status": {}, "objects": []},
@@ -135,10 +137,14 @@ def xcreate_frames(time_step, traffic_timing, gui_boundaries, sumo_boundaries):
         add_vehicles_to_frame(step, frames, gui_boundaries, sumo_boundaries)
         for angle in frames.keys():
             add_traffic_light_status(frames, angle, traffic_timing)
-        Data_Analysis.add_alerts(frames[0], prev_frames[0], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
-        Data_Analysis.add_alerts(frames[90], prev_frames[90], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
-        Data_Analysis.add_alerts(frames[180], prev_frames[180], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
-        Data_Analysis.add_alerts(frames[270], prev_frames[270], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes, True)
+        Data_Analysis.add_alerts(frames[0], prev_frames[0], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes,
+                                 lanes_react, True)
+        Data_Analysis.add_alerts(frames[90], prev_frames[90], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes,
+                                 lanes_react, True)
+        Data_Analysis.add_alerts(frames[180], prev_frames[180], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes,
+                                 lanes_react, True)
+        Data_Analysis.add_alerts(frames[270], prev_frames[270], lane_ratio, SUMO_DIRECTION, 0, stop_line, lanes,
+                                 lanes_react, True)
         out_jsons[0].append(frames[0])
         out_jsons[1].append(frames[90])
         out_jsons[2].append(frames[180])
@@ -272,7 +278,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-# vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 10, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 1, -1]}
+vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 1000000, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 100, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):
@@ -294,7 +300,11 @@ def get_simulation(duration, cars_per_second, vehicle_info):
     add_vehicle_types(vehicle_info, "cross_1.add.xml")
     sumoCmd = [sumo, "-c", "cross_1.sumocfg", "-e", str(duration), "--fcd-output", "cross_1_trace.xml"]
     subprocess.call(sumoCmd)
-    return sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
+    frames = sumo_parse("cross_1_trace.xml", "cross_1.net.xml", gui_coordinates, sumo_coordinates)
+    out = []
+    for side in frames:
+        out.append({'frames': side, 'statistics': Data_Analysis.get_statistic_report(side)})
+    return out
 
 
-# get_simulation(100, 0.5, vehicle_info1)
+#get_simulation(100, 0.5, vehicle_info1)
