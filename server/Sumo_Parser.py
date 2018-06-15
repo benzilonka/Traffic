@@ -278,7 +278,7 @@ def add_vehicle_types(vehicle_info, file_name):
 # vehicle info example values are: max speed, sigma, acceleration, deceleration, minimum gap between cars,
 # lane change policy (1-inf), make red crossing optional (-1 to 0)
 # for more info see http://sumo.dlr.de/wiki/Definition_of_Vehicles,_Vehicle_Types,_and_Routes
-vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 1000000, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 100, -1]}
+# vehicle_info1 = {"car": [70, 0.8, 2.6, 4.5, 2.5, 1000000, 0], "bus": [70, 0.2, 2.1, 4.3, 2.5, 100, -1]}
 
 # fix: the configuration file need to be defined in here from scratch
 def get_simulation(duration, cars_per_second, vehicle_info):

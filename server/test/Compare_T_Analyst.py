@@ -1,8 +1,7 @@
 import json
 import os
 import sys
-
-from scipy._lib.six import reduce
+import matplotlib.pyplot as plt
 from scipy.spatial import distance
 
 RATIO_X = 1.78082
@@ -192,13 +191,18 @@ def camper_two(car_1, car_2):
     frame_counter = 0
     sum_error_x = 0
     sum_error_y = 0
+    camper_cars = [[], [], [], []]
     while key_1 in car_1.keys() and key_2 in car_2.keys():
         frame_counter += 1
+        camper_cars[0].append(car_1[key_1][0])
+        camper_cars[1].append(car_2[key_2][0])
+        camper_cars[2].append(car_1[key_1][1])
+        camper_cars[3].append(car_2[key_2][1])
         sum_error_x += abs(car_1[key_1][0] - car_2[key_2][0])
         sum_error_y += abs(car_1[key_1][1] - car_2[key_2][1])
         key_1 += 1
         key_2 += 1
-    return [sum_error_x / frame_counter, sum_error_y / frame_counter, frame_counter]
+    return [sum_error_x / frame_counter, sum_error_y / frame_counter, camper_cars]
 
 
 def compare(data):
@@ -206,22 +210,34 @@ def compare(data):
     car_mapping = data[0]
     vehicles_system = data[1]
     vehicles_analyst = data[2]
-    print(vehicles_analyst)
     for car_key in car_mapping.keys():
-        vector_ans = (sys.maxsize, sys.maxsize, sys.maxsize)
+        vector_ans = (sys.maxsize, sys.maxsize, None)
         for car_to_map in car_mapping[car_key]:
             vector = camper_two(vehicles_system[car_to_map[0]], vehicles_analyst[car_key])
-            if reduce(lambda x, y: x + y, vector_ans) / len(vector_ans) > \
-                    reduce(lambda x, y: x + y, vector) / len(vector):
+            if (vector_ans[0] + vector_ans[1]) / 2 > (vector[0] + vector[1]) / 2:
                 vector_ans = vector
         ans.append(vector_ans)
     return ans
 
 
+def pretty_print(analyzed_data):
+    for data in analyzed_data:
+        plt.plot(data[2][2], data[2][3])
+        plt.ylabel('System Output')
+        plt.xlabel('T-Analyst Output')
+        plt.title('X Coordinate Values')
+        plt.show()
+        plt.plot(data[2][1], data[2][0])
+        plt.ylabel('System Output')
+        plt.title('Y Coordinate Values')
+        plt.xlabel('T-Analyst Output')
+        plt.show()
+
+
 def compare_data():
     t_analyst_data = convert_to_meta('.\\t-analyst data')
     system_data = get_system_data()
-    print(compare(get_car_mapping(t_analyst_data, system_data)))
+    pretty_print(compare(get_car_mapping(t_analyst_data, system_data)))
 
 
 compare_data()
