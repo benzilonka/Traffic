@@ -10,6 +10,7 @@ import Sumo_Parser
 
 db = DBL.DB_Layer()
 
+
 def getFrames(data):
     return Parser.fix_file(data['meta'], json.loads(data['json']))
 
@@ -34,8 +35,8 @@ def addDatasetFile(data):
     return file_content
 
 def deleteJunction(data):
-    db.delete_junction(data['junction_id'])
-    db.delete_junction(data['junction_id'])
+    db.delete_junction_db(data['junction_id'])
+    db.delete_junction_storage(data['junction_id'])
     return True
 
 def createSimulation(data):
@@ -116,20 +117,21 @@ def run():
 if __name__ == '__main__':
     run()
 
-# with open("big_22.12.2017-10_28_44.json", 'r') as jso:
-#     with open("scheduled_11.03.2018-08_21_17.meta", 'r') as meta:
-#         a = {'meta': meta.read(), 'json': jso.read()}
-#         with open("out.json", 'w') as outfile:
-#             out = getFrames(a)
-#             outfile.write('[')
-#             first_flag = False
-#             for frame in out['frames']:
-#                 if first_flag:
-#                     outfile.write(',')
-#                 first_flag = True
-#                 outfile.write(str(frame))
-#                 outfile.write('\n')
-#             outfile.write(']')
+#with open("../more examples/scheduled_22.03.2018-07_00_09.json", 'r') as jso:
+#    with open("../more examples/scheduled_11.03.2018-05_24_50.meta", 'r') as meta:
+#        a = {'meta': meta.read(), 'json': jso.read()}
+#        with open("out.json", 'w') as outfile:
+#            out = getFrames(a)            
+#            outfile.write('[')
+#            first_flag = False
+#            for frame in out['frames']:
+#                print(frame)
+#                if first_flag:
+#                    outfile.write(',')
+#                first_flag = True
+#                outfile.write(str(frame))
+#                outfile.write('\n')
+#            outfile.write(']')
 
 
 
