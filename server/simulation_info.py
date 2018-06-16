@@ -7,7 +7,7 @@ import os
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = 'Yrtphe1820-='
+DB_PASSWD = '123456'
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 
@@ -105,8 +105,7 @@ class simulation_info_db(object):
                 sql = "SELECT * FROM `simulation_info`"
                 cursor.execute(sql)
                 result = cursor.fetchall()
-                for simul in result:
-                    simul['vehicle_info'] = ast.literal_eval(simul['vehicle_info'])
+               
 
 
                 

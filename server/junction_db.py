@@ -7,7 +7,7 @@ import os
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWD = 'Yrtphe1820-='
+DB_PASSWD = '123456'
 DB_NAME = 'traffic'
 DB_CHARSET = 'utf8mb4'
 
