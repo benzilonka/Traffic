@@ -26,6 +26,10 @@ class Controls extends Component {
         }
 
         let time_passed = 0;
+        let frames_count = null;
+        if(this.props.currentFrame != null && this.props.numOfFrames != null) {
+            frames_count = this.props.currentFrame + " / " + this.props.numOfFrames;
+        }
         try {
             let date_time_passed = new Date(null);
             date_time_passed.setSeconds(this.props.played * FRAME_TIME * 1000); // specify value for SECONDS here
@@ -83,6 +87,8 @@ class Controls extends Component {
                                 onSeekEnd={this.props.onSeekMouseUp}
                             />
                             <small>{time_passed}</small>
+                            &nbsp;&nbsp;
+                            <small>{frames_count}</small>                            
                         </Col>
                         <Col xs={4}>
                             <Row>

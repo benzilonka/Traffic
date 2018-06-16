@@ -79,10 +79,15 @@ class Map extends Component {
 
   toggleVehicleStatistics = (statistics, i, tracking_id) => {
     let stats = this.state.vehicle_statistics;
-    stats[i] = statistics;
+    if(JSON.stringify(stats[i]) === JSON.stringify(statistics)) {
+      stats[i] = null;
+    } else {
+      stats[i] = statistics;
+    }
     this.setState({
       vehicle_statistics: stats
     });
+    
     this.props.highlightVehicleFunc(tracking_id);
   }
 
@@ -107,7 +112,7 @@ class Map extends Component {
     let c = 0;
     for(let i = currFrame - 1; i >= 0; i--) {
       for(let j = 0; j < cars[i].length; j++) {
-        if(cars[i][j].tracking_id == vehicle.tracking_id) {
+        if(cars[i][j].tracking_id === vehicle.tracking_id) {
           if(cars[i][j].passed_in_red) {
             return true;
           }
@@ -120,7 +125,7 @@ class Map extends Component {
     c = 0;
     for(let i = currFrame + 1; i < cars.length; i++) {
       for(let j = 0; j < cars[i].length; j++) {
-        if(cars[i][j].tracking_id == vehicle.tracking_id) {
+        if(cars[i][j].tracking_id === vehicle.tracking_id) {
           if(cars[i][j].passed_in_red) {
             return true;
           }
@@ -133,7 +138,7 @@ class Map extends Component {
     return false;
   }
 
-  render = () => {
+  render = () => {    
     let vehicles = [[], [], [], []];
     let traffic_lights = [null, null, null, null];
     try {

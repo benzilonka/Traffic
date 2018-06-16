@@ -191,13 +191,14 @@ class App extends Component {
           response.data = response.data.frames;
         }
         _frames[i] = self.parseFrames(response.data, i);        
-        let size = 0;
+        let size = 0;        
         _frames.map(function(frames_for_direction) {
           if(frames_for_direction && frames_for_direction.cars && frames_for_direction.cars.length > size) {
             size = frames_for_direction.cars.length;
           }
           return null;
         });
+        console.log(_frames);
         self.setState({
           frames: _frames,
           numOfFrames: size,
@@ -553,8 +554,12 @@ class App extends Component {
     });
   };
   highlightVehicle = vehicle_id => {
+    let v = vehicle_id;
+    if(this.state.highlightVehicle === vehicle_id) {
+      v = null;
+    }
     this.setState({
-      highlightVehicle: vehicle_id
+      highlightVehicle: v
     });
   };
 
@@ -611,6 +616,8 @@ class App extends Component {
                       <Controls ref="controls"
                               playing={this.state.playing}
                               played={this.state.played} 
+                              currentFrame={this.state.currentFrame}
+                              numOfFrames={this.state.numOfFrames}
                               playPause={this.playPause.bind(this)}
                               playbackRate={this.state.playbackRate} 
                               setPlaybackRate={this.setPlaybackRate.bind(this)} 
