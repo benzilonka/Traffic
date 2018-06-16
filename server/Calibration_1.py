@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import Parser
+from server import Parser
 
 
 def create_rect(width, height):

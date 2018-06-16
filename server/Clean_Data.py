@@ -2,6 +2,7 @@ import json
 import math
 import numpy as np
 from scipy.signal import savgol_filter
+import matplotlib.pyplot as plt
 
 
 def clean(data):
@@ -68,7 +69,6 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
     for path in vehiclesPath:
         start_location = vehiclesPath[path][0]
         end_location = vehiclesPath[path][len(vehiclesPath[path]) - 1]
-
         # First Stage:
         #   We'll check that every location is in the range in x axis and in y axis
         #   between the start and end location and then change locations that doesn't satisfies that
@@ -87,7 +87,7 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         #   Smooth the locations in current path
         vehiclesPath[path] = smoothData(vehiclesPath[path])
 
-        # Fix and handle speeds of vehicles from given data
+    # Fix and handle speeds of vehicles from given data
         # Fourth Stage:
         #   We'll fix logically impossible high sampled speeds.
         index = 0
@@ -101,21 +101,20 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
         vehiclesSpeed[path] = checkForLegalDifferSpeed(vehiclesSpeed[path], vehiclesPath[path])
     return vehiclesPath, vehiclesSpeed
 
-
 def smoothData(path):
     points = np.array(path)
     numOfPoints = len(path)
     threshold = 15
     polynomialDeg = 4
 
-    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter method
+    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter algorithm
     if numOfPoints > polynomialDeg:
         # get x and y vectors
         x = points[:, 0]
         y = points[:, 1]
-        # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
+        # The number of coefficients should be big enough so the filter affect will be seen while using 4th deg polynomial
         if numOfPoints > threshold:
-            numOfPoints = int(numOfPoints / 2)
+            numOfPoints = int(numOfPoints/2)
         # this param in savgol_filter has to be a positive odd number
         if numOfPoints % 2 == 0:
             numOfPoints -= 1
@@ -124,15 +123,6 @@ def smoothData(path):
         x_new = savgol_filter(x, numOfPoints, polynomialDeg)
         y_new = savgol_filter(y, numOfPoints, polynomialDeg)
 
-        """plt.subplot(211)
-        plt.plot(x, 'o', x_new)
-        plt.title('Polynomial Fit X with Matplotlib')
-    
-        plt.subplot(212)
-        plt.plot(y, 'o', y_new)
-        plt.title('Polynomial Fit Y with Matplotlib')
-    
-        plt.show()"""
         result = []
         for i in range(0, len(x_new)):
             result.append([x_new[i], y_new[i]])
@@ -140,36 +130,32 @@ def smoothData(path):
     else:
         return path
 
-
 # Calculate the distance between two locations using Pythagorean Theorem
 def calcDistance(startLocation, endLocation):
     xDistance = abs(endLocation[0] - startLocation[0])
     yDistance = abs(endLocation[1] - startLocation[1])
-    return math.sqrt(xDistance ** 2 + yDistance ** 2)
-
+    return math.sqrt(xDistance**2 + yDistance**2)
 
 def checkForLegalDifferSpeed(vehicleSpeedList, vehiclePath):
     # delta(time) = 1/15 second = 66.66666666666667 milliseconds (according to 15 fps)
     deltaTime = 1. / 15
     index = 0
-    while index < len(vehiclePath) - 1:
-        distance = calcDistance(vehiclePath[index], vehiclePath[index + 1])
-        suggestedVelocity = distance / deltaTime
+    while index < len(vehiclePath)-1:
+        distance = calcDistance(vehiclePath[index], vehiclePath[index+1])
+        suggestedVelocity = distance/deltaTime
         fittedVelocity = checkForLegalSpeedAndFit(suggestedVelocity)
         vehicleSpeedList[index] = fittedVelocity
         index += 1
     return vehicleSpeedList
 
-
 def checkForLegalSpeedAndFit(currentSpeed):
     # max speed is in km/h
     maxSpeed = 120.0
     # max legal speed is in m/s
-    maxLegalSpeedPerSec = maxSpeed / 3.6
+    maxLegalSpeedPerSec = maxSpeed/3.6
     if currentSpeed > maxLegalSpeedPerSec:
         currentSpeed = maxLegalSpeedPerSec
     return currentSpeed
-
 
 def checkInRangeAndFit(start, end, currentLocation):
     # check x/y axis
@@ -188,7 +174,6 @@ def checkInRangeAndFit(start, end, currentLocation):
                 newLocation = end
     return newLocation
 
-
 def linearMovement(start, end, path):
     index = 1
     if len(path) < 2:
@@ -198,30 +183,28 @@ def linearMovement(start, end, path):
     directionY = checkForDirection(start, end, 1)
     if directionX == "unknown" or directionY == "unknown":
         if directionX == "unknown" and directionY == "unknown":
-            for i in range(index, len(path) - 1):
-                path[i] = path[i - 1]
+            for i in range(index, len(path)-1):
+                path[i] = path[i-1]
         elif directionX == "unknown" and not (directionY == "unknown"):
-            for i in range(index, len(path) - 1):
-                path[i][0] = path[i - 1][0]
+            for i in range(index, len(path)-1):
+                path[i][0] = path[i-1][0]
         else:
-            for i in range(index, len(path) - 1):
-                path[i][1] = path[i - 1][1]
-    else:
-        index = 0
-        path = linearMovementHelper(directionX, directionY, path, index)
+            for i in range(index, len(path)-1):
+                path[i][1] = path[i-1][1]
+    index = 0
+    path = linearMovementHelper(directionX, directionY, path, index)
     return path
-
 
 def linearMovementHelper(directionX, directionY, path, index):
     # No need to change start and end locations
-    while index < len(path) - 1:
+    while index < len(path)-1:
         # if isOK = True, move to the next index else 'fix' the location in index+1
-        isOkX = checkIfLinear(path[index], path[index + 1], directionX, 0)
+        isOkX = checkIfLinear(path[index], path[index+1], directionX, 0)
         if not isOkX:
-            path[index + 1][0] = path[index][0]
-        isOkY = checkIfLinear(path[index], path[index + 1], directionY, 1)
+            path[index+1][0] = path[index][0]
+        isOkY = checkIfLinear(path[index], path[index+1], directionY, 1)
         if not isOkY:
-            path[index + 1][1] = path[index][1]
+            path[index+1][1] = path[index][1]
         index += 1
     return path
 
@@ -241,7 +224,35 @@ def checkIfLinear(locFrom, locTo, direction, xORy):
     if direction == "up":
         if locFrom[xORy] > locTo[xORy]:
             ans = False
-    else:  # direction = down
+    else: # direction = down\unknown
         if locTo[xORy] > locFrom[xORy]:
             ans = False
     return ans
+
+# Enter this after the second line inside the first 'for' loop in normalizeData()
+    """x = np.array(vehiclesPath[path])[:, 0]
+        y = np.array(vehiclesPath[path])[:, 1]
+        plt.subplot(211)
+        plt.plot(x, 'o', label='Raw Data')
+        plt.subplot(212)
+        plt.plot(y, 'o', label='Raw Data')
+        """
+
+# Enter this after using savgol_filter algorithm in smoothData()
+    """plt.subplot(211)
+        plt.plot(x, '-', label='Linear algorithm fix')
+        plt.plot(x_new, label='Final fix')
+        plt.ylabel('X_location\n')
+        plt.xlabel('Number of sample points')
+        plt.title('Polynomial Fit X')
+        plt.legend()
+
+        plt.subplot(212)
+        plt.plot(y, '-', label='Linear algorithm fix')
+        plt.plot(y_new, label='Final fix')
+        plt.ylabel('Y_location\n')
+        plt.xlabel('Number of sample points')
+        plt.title('Polynomial Fit Y')
+        plt.legend()
+
+        plt.show()"""

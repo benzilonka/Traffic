@@ -1,7 +1,7 @@
 import json
-import Clean_Data
-import Calibration_1
-import Data_Analysis
+from server import Clean_Data
+from server import Calibration_1
+from server import Data_Analysis
 
 RECT_WIDTH = 35
 RECT_HEIGHT = 690

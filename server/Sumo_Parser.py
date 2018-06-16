@@ -2,13 +2,11 @@ import copy
 import os
 import sys
 import subprocess
-import Data_Analysis
-
 from datetime import datetime
 from xml.dom import minidom
 import xml.etree.cElementTree as ET
 
-from Parser import get_vehicles
+from server import Data_Analysis
 
 SUMO_DIRECTION = 1
 
