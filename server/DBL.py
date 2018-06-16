@@ -14,7 +14,7 @@ DB_USER = 'root'
 DB_PASSWORD = 'Yrtphe1820-='
 DB_NAME = 'traffic'
 DB_PORT = 3306
-DB_CHARSET = 'utf8'
+DB_CHARSET = 'utf8mb4'
 FRAMES_JUMPS_ON_SEARCH = 16
 storage = storage_layer.Storage()
 vidio_db = vidio_info_db.vidio_info_db()
@@ -138,7 +138,7 @@ class DB_Layer(object):
     def get_junctions(self):
         return junction_db.serch_all_junction_info()
     
-    def delete_junction(self, junction_id):
+    def delete_junction_db(self, junction_id):
         junction_db.delete_junction_info(junction_id)
 
     def get_datasets(self, junction_id):
@@ -251,7 +251,7 @@ class DB_Layer(object):
     def store_dataset_file(self,junction_id, vidio_info_id, index, file_content):
         storage.store_dataset_file(junction_id, vidio_info_id, index, file_content)
         
-    def delete_junction (self,junction_id):
+    def delete_junction_storage (self,junction_id):
         storage.delete_junction(junction_id) 
 
    
