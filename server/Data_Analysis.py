@@ -1,7 +1,7 @@
 import json
 import sys
 
-import Parser
+from server import Parser
 
 
 def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes, sumo_flag):
@@ -166,18 +166,19 @@ def get_final_report(vehicle_info, report, car_count, bus_count, truck_count, le
             ttc_sum += vehicle_info[vid]['average_ttc']
             ttc_count += 1
     report['average_speed'] = speed_sum / vehicle_num
-    report['average_ttc'] = ttc_sum / ttc_count
+    if ttc_count != 0:
+        report['average_ttc'] = ttc_sum / ttc_count
     report['ttc_count'] = ttc_count
     report['average_zigzag'] = zigzag_sum / vehicle_num
     report['zigzag_per_second'] = zigzag_sum / length
-    report['car_pre_second'] = vehicle_num / length
+    report['car_per_second'] = vehicle_num / length
     report['vehicle_info'] = vehicle_info
     return report
 
 
 def get_statistic_report(frames):
     vehicle_info = {}
-    report = {'num_of_cars': 0, 'car_pre_second': 0, 'max_speed': -sys.maxsize, 'min_ttc': sys.maxsize, 'ttc_count': 0,
+    report = {'num_of_cars': 0, 'car_per_second': 0, 'max_speed': -sys.maxsize, 'min_ttc': sys.maxsize, 'ttc_count': 0,
               'average_speed': 0, 'average_ttc': 0, "average_zigzag": 0, 'max_zigzag': 0, 'zigzag_per_second': 0,
               'red_cross_count': None, 'against_direction_count': 0, 'car_distribution': 0, 'bus_distribution': 0,
               'truck_distribution': 0, 'vehicle_info': []}

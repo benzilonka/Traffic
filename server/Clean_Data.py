@@ -2,6 +2,7 @@ import json
 import math
 import numpy as np
 from scipy.signal import savgol_filter
+import matplotlib.pyplot as plt
 
 
 def clean(data):
@@ -68,7 +69,6 @@ def normalizeData(vehiclesPath, vehiclesSpeed):
     for path in vehiclesPath:
         start_location = vehiclesPath[path][0]
         end_location = vehiclesPath[path][len(vehiclesPath[path]) - 1]
-
         # First Stage:
         #   We'll check that every location is in the range in x axis and in y axis
         #   between the start and end location and then change locations that doesn't satisfies that
@@ -107,12 +107,12 @@ def smoothData(path):
     threshold = 15
     polynomialDeg = 4
 
-    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter method
+    # The numOfPoints parameter must be bigger than polynomialDeg parameter in savgol_filter algorithm
     if numOfPoints > polynomialDeg:
         # get x and y vectors
         x = points[:, 0]
         y = points[:, 1]
-        # Number of points is big enough so the filter affect will be seen while using 4th deg polynomial
+        # The number of coefficients should be big enough so the filter affect will be seen while using 4th deg polynomial
         if numOfPoints > threshold:
             numOfPoints = int(numOfPoints/2)
         # this param in savgol_filter has to be a positive odd number
@@ -123,15 +123,6 @@ def smoothData(path):
         x_new = savgol_filter(x, numOfPoints, polynomialDeg)
         y_new = savgol_filter(y, numOfPoints, polynomialDeg)
 
-        """plt.subplot(211)
-        plt.plot(x, 'o', x_new)
-        plt.title('Polynomial Fit X with Matplotlib')
-    
-        plt.subplot(212)
-        plt.plot(y, 'o', y_new)
-        plt.title('Polynomial Fit Y with Matplotlib')
-    
-        plt.show()"""
         result = []
         for i in range(0, len(x_new)):
             result.append([x_new[i], y_new[i]])
@@ -200,9 +191,8 @@ def linearMovement(start, end, path):
         else:
             for i in range(index, len(path)-1):
                 path[i][1] = path[i-1][1]
-    else:
-        index = 0
-        path = linearMovementHelper(directionX, directionY, path, index)
+    index = 0
+    path = linearMovementHelper(directionX, directionY, path, index)
     return path
 
 def linearMovementHelper(directionX, directionY, path, index):
@@ -234,7 +224,35 @@ def checkIfLinear(locFrom, locTo, direction, xORy):
     if direction == "up":
         if locFrom[xORy] > locTo[xORy]:
             ans = False
-    else: # direction = down
+    else: # direction = down\unknown
         if locTo[xORy] > locFrom[xORy]:
             ans = False
     return ans
+
+# Enter this after the second line inside the first 'for' loop in normalizeData()
+    """x = np.array(vehiclesPath[path])[:, 0]
+        y = np.array(vehiclesPath[path])[:, 1]
+        plt.subplot(211)
+        plt.plot(x, 'o', label='Raw Data')
+        plt.subplot(212)
+        plt.plot(y, 'o', label='Raw Data')
+        """
+
+# Enter this after using savgol_filter algorithm in smoothData()
+    """plt.subplot(211)
+        plt.plot(x, '-', label='Linear algorithm fix')
+        plt.plot(x_new, label='Final fix')
+        plt.ylabel('X_location\n')
+        plt.xlabel('Number of sample points')
+        plt.title('Polynomial Fit X')
+        plt.legend()
+
+        plt.subplot(212)
+        plt.plot(y, '-', label='Linear algorithm fix')
+        plt.plot(y_new, label='Final fix')
+        plt.ylabel('Y_location\n')
+        plt.xlabel('Number of sample points')
+        plt.title('Polynomial Fit Y')
+        plt.legend()
+
+        plt.show()"""
