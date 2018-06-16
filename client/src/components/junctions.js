@@ -39,7 +39,7 @@ class Junctions extends Component {
         let markers = this.props.junctions.map(function(junction) {
             return (
                 <Marker 
-                    position={{ lat: junction.lat, lng: junction.lon }} 
+                    position={{ lat: junction.lat, lng: junction.lng }} 
                     key={junction.id} 
                     onClick={() => self.handleMarkerClick(junction)} 
                 />
@@ -47,7 +47,7 @@ class Junctions extends Component {
         });
         MyMapComponent = compose(
             withProps({
-              googleMapURL: "https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places",
+              googleMapURL: "https://maps.googleapis.com/maps/api/js?key=AIzaSyC7C5ZVovp56TCaTO5dNMLKJfsPA5-WaBk&v=3.exp&libraries=geometry,drawing,places",
               loadingElement: <div style={{ height: `100%` }} />,
               containerElement: <div style={{ height: `380px` }} />,
               mapElement: <div style={{ height: `100%` }} />,

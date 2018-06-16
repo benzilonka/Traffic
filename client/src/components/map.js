@@ -4,11 +4,11 @@ import Vehicle from './vehicle.js';
 import Statistics from './statistics.js';
 import TrafficLight from './TrafficLight.js';
 import '../styles/Map.css';
-import loading_gif from '../images/loading.gif';
 
 const MAP_HEIGHT = 735;
 const MAP_WIDTH = 735;
 const LANE_WIDTH = 70;
+const LANE_HEIGHT = 735;
 const DIRECTIONS = {
   TOP_TO_DOWN: 0,
   RIGHT_TO_LEFT: 1,
@@ -23,27 +23,27 @@ let lane0Style = {
   top: 0,
   left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
   width: LANE_WIDTH,
-  height: MAP_HEIGHT,
+  height: LANE_HEIGHT,
 };
 let lane1Style = {
   top: 0,
   left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
   width: LANE_WIDTH,
-  height: MAP_HEIGHT,
+  height: LANE_HEIGHT,
   transform: 'rotate(270deg)'
 };
 let lane2Style = {
   top: 0,
   left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
   width: LANE_WIDTH,
-  height: MAP_HEIGHT,
+  height: LANE_HEIGHT,
   transform: 'rotate(180deg)'
 };
 let lane3Style = {
   top: 0,
   left: MAP_HEIGHT / 2 - LANE_WIDTH / 2,
   width: LANE_WIDTH,
-  height: MAP_HEIGHT,
+  height: LANE_HEIGHT,
   transform: 'rotate(90deg)'
 };
 let lanesIntersect = {
@@ -52,15 +52,7 @@ let lanesIntersect = {
   width: LANE_WIDTH,
   height: LANE_WIDTH,
   transform: "translate(-" + LANE_WIDTH / 2 + "px,-" + LANE_WIDTH / 2 + "px)"
-}
-let loadingStyle = {      
-  backgroundImage: `url(${loading_gif})`,
-  height: MAP_HEIGHT + 'px',
-  width: MAP_WIDTH + 'px'
 };
-
-
-
 
 
 class Map extends Component {
@@ -107,15 +99,46 @@ class Map extends Component {
       mouseDown: false
     });
   }
+  vehiclePassedInRed = (currFrame, vehicle, cars) => {
+    if(vehicle.passed_in_red) {
+      return true;
+    }
+    const MAX = 2;
+    let c = 0;
+    for(let i = currFrame - 1; i >= 0; i--) {
+      for(let j = 0; j < cars[i].length; j++) {
+        if(cars[i][j].tracking_id == vehicle.tracking_id) {
+          if(cars[i][j].passed_in_red) {
+            return true;
+          }
+        }
+      }
+      if(c++ > MAX) {
+        break;
+      }
+    }
+    c = 0;
+    for(let i = currFrame + 1; i < cars.length; i++) {
+      for(let j = 0; j < cars[i].length; j++) {
+        if(cars[i][j].tracking_id == vehicle.tracking_id) {
+          if(cars[i][j].passed_in_red) {
+            return true;
+          }
+        }
+      }
+      if(c++ > MAX) {
+        break;
+      }
+    }
+    return false;
+  }
 
-  render() {
-
+  render = () => {
     let vehicles = [[], [], [], []];
     let traffic_lights = [null, null, null, null];
     try {
       if(this.props.currentFrame != null) {
         let self = this;
-        let i = 0;
         this.props.frames.map(function(directionFrames, index) {
           if(directionFrames != null && directionFrames.cars != null) {
             if(directionFrames.cars[self.props.currentFrame] != null) {
@@ -151,6 +174,7 @@ class Map extends Component {
                              showTTC={self.props.showTTC}
                              showDistance={self.props.showDistance}
                              highlight={highlight}
+                             passed_in_red={self.vehiclePassedInRed(self.props.currentFrame, vehicle, directionFrames.cars)}
                              >
                     </Vehicle>
                   </div>
@@ -175,14 +199,7 @@ class Map extends Component {
       console.log(e);
     }   
     //console.log(vehicles);
-    
-    let loading = '';
-    if(this.props.loading) {
-      loading = (
-        <div className="Loading" style={loadingStyle}></div>
-      );
-    }
-
+  
     let vehicle_statistics = [];
     for(let i = 0; i < 4; i++) {
       if(this.state.vehicle_statistics[i] != null) {
@@ -260,7 +277,6 @@ class Map extends Component {
             </div>
           </div>
         </div>
-        {loading}
       </div>
     );
   }

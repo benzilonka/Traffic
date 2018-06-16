@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 import React, { Component } from 'react';
 import { CSSTransitionGroup } from 'react-transition-group';
+import loading_gif from './images/loading.gif';
 
 import {
   Container, 
@@ -32,6 +33,10 @@ const TABS = {
   simulation: 2
 };
 const FADE_IN_TIME = 300;
+const loadingStyle = {      
+  backgroundImage: `url(${loading_gif})`
+};
+
 
 class App extends Component {
   constructor(props) {
@@ -56,10 +61,11 @@ class App extends Component {
       isMenuOpen: false,
       search_results: []
     };
-
-    this.getJunctions(function() {});
+    let self = this;
+    setTimeout(function() {
+      self.getJunctions(function() {});
+    }, 100);
   }
-
   toggleShowSpeed = () => {
     this.setState({
       showSpeed: !this.state.showSpeed
@@ -147,7 +153,7 @@ class App extends Component {
     urls[i] = url;
     this.setState({
       urls: urls
-    }, function() {      
+    }, function() {
       if(this.refs.videos) {
         setTimeout(function() {
           self.refs.videos.seekTo(self.state.played);
@@ -206,6 +212,7 @@ class App extends Component {
   };
 
   parseFrames = (json, direction) => {
+    //console.log(json);
     let i = 0;
     let frames = {
       cars: [],
@@ -215,7 +222,7 @@ class App extends Component {
       let cars = [];
       //console.log(frame);
       frame.objects.map(function(car) {
-        cars.push({
+        let c = {
           y: Math.floor(car.bounding_box[1] / 2),
           x: Math.floor(car.bounding_box[0] / 2),
           type: car.type,
@@ -225,7 +232,11 @@ class App extends Component {
           ttc: car.ttc,
           distance: car.distance,
           key: i
-        });
+        };
+        if(car.hasOwnProperty('passed_in_red')){
+          c.passed_in_red = car.passed_in_red;
+        }
+        cars.push(c);
         i++;
         return null;
       });
@@ -237,19 +248,24 @@ class App extends Component {
   };
 
   getJunctions = callback => {
+    this.setState({
+      loading: true
+    });
     let self = this;
     axios.post(SERVER_URL, {
       route: 'getJunctions'
     })
     .then(function (response) {
       try {
+        //console.log(response.data);
         response.data.map(function(junc) {
           junc.lat = parseFloat(junc.lat);
-          junc.lon = parseFloat(junc.lon);
+          junc.lng = parseFloat(junc.lng);
           return null;
         });
         self.setState({
-          junctions: response.data
+          junctions: response.data,
+          loading: false
         }, function() { callback(response.data); });
       }
       catch(e) {
@@ -260,6 +276,9 @@ class App extends Component {
   };
 
   getDatasets = (junction_id, callback) => {
+    this.setState({
+      loading: true
+    });
     let self = this;
     axios.post(SERVER_URL, {
       route: 'getDatasets',
@@ -281,7 +300,8 @@ class App extends Component {
           selectedJunction.datasets = response.data;
         }
         self.setState({
-          selectedJunction: selectedJunction
+          selectedJunction: selectedJunction,
+          loading: false
         });
         callback(response.data);
       }
@@ -297,6 +317,7 @@ class App extends Component {
       frames: [null, null, null, null],
       urls: [null, null, null, null],
       statistics: [null, null, null, null],
+      loading: true
     });
     let self = this;
     axios.post(SERVER_URL, {
@@ -319,7 +340,7 @@ class App extends Component {
         });
         let size = 0;
         _frames.map(function(frames_for_direction) {
-          console.log(frames_for_direction);
+          //console.log(frames_for_direction);
           if(frames_for_direction.cars.length > size) {
             size = frames_for_direction.cars.length;
           }
@@ -365,6 +386,9 @@ class App extends Component {
   };
 
   deleteJunction = (callback) => {
+    this.setState({
+      loading: true
+    });
     let self = this;
     axios.post(SERVER_URL, {
       route: 'deleteJunction',
@@ -373,7 +397,8 @@ class App extends Component {
     .then(function (response) {        
       try {
         self.setState({
-          selectedJunction: null
+          selectedJunction: null,
+          loading: false
         }, function() { self.getJunctions(callback); });        
       }
       catch(e) {
@@ -400,6 +425,9 @@ class App extends Component {
   };
 
   createSimulation = simulation => {
+    this.setState({
+      loading: true
+    });
     let self = this;
     axios.post(SERVER_URL, {
       route: 'createSimulation',
@@ -410,7 +438,8 @@ class App extends Component {
       try {
         simulation.id = 0;
         self.setState({
-          selectedJunction: simulation
+          selectedJunction: simulation,
+          loading: false
         });
         self.getDatasetFiles(response.data);
       }
@@ -485,7 +514,7 @@ class App extends Component {
     return ret;
   };
   search = params => {
-    console.log(params);
+    //console.log(params);
     if(params.selectedJunction == null || params.selectedValue == null || ((params.selectedValue === 'equal' || params.selectedValue === 'bool') && params.equalTo == null) || (params.selectedValue === 'minmax' && (params.min == null || params.max == null))) {
       return;
     }
@@ -509,7 +538,7 @@ class App extends Component {
       default:
         break;
     }
-    console.log(data);
+    //console.log(data);
     let self = this;
     axios.post(SERVER_URL, data)
     .then(function (response) {
@@ -535,9 +564,9 @@ class App extends Component {
     this.setState({
       statistics: curr_stats
     });
-  }
+  };
 
-  render() {
+  render = () => {
     let curr_tab;
     switch(this.state.tab) {
       case TABS.main:
@@ -649,6 +678,13 @@ class App extends Component {
         break;
     }
 
+    let loading = '';
+    if(this.state.loading) {
+      loading = (
+        <div className="Loading" style={loadingStyle}></div>
+      );
+    }
+
     return (
       <div className="App">
           <Navbar color="light" light expand="md">
@@ -679,6 +715,7 @@ class App extends Component {
                   onSeekChange={this.onSeekChange.bind(this)}
                   highlightVehicle={this.highlightVehicle.bind(this)}
           ></Search>
+          {loading}
       </div>
     );
   }

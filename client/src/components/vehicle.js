@@ -7,7 +7,6 @@ import '../styles/Map.css';
 class Vehicle extends Component {
 
   render() {
-
     
     let x = this.props.x;
     if(x < 17) {
@@ -21,40 +20,44 @@ class Vehicle extends Component {
         width: this.getVehicleDimensions(this.props.type).width + 'px',
         height: this.getVehicleDimensions(this.props.type).height + 'px'
     };
-    let labelStyle = {};
     if(this.props.highlight) {
       style.backgroundColor = 'deeppink';
       style.zIndex = 2;
-      labelStyle.backgroundColor = 'green';
     }
     let speed = null;
     if(this.props.showSpeed && this.props.speed) {
       speed = (
-        <span style={labelStyle}>speed: {this.props.speed.toFixed(2)} m/s</span>
+        <div>speed: {this.props.speed.toFixed(2)} m/s</div>
       );
     }
     let ttc = null;
     if(this.props.showTTC) {
       if(this.props.ttc && this.props.ttc > -1) {
         ttc = (
-          <span style={labelStyle}>ttc: {this.props.ttc.toFixed(2)} s</span>
+          <div>ttc: {this.props.ttc.toFixed(2)} s</div>
         );
       }
       else {
         ttc = (
-          <span style={labelStyle}>ttc: -</span>
+          <div>ttc: -</div>
         );
       }
     }
     let distance = null;
     if(this.props.showDistance && this.props.distance) {
       distance = (
-        <span style={labelStyle}>dis: {this.props.distance.toFixed(2)} m</span>
+        <div>dis: {this.props.distance.toFixed(2)} m</div>
+      );
+    }
+    let passed_in_red = null;
+    if(this.props.passed_in_red) {
+      passed_in_red = (
+        <div className="red-light-alert">RED LIGHT!</div>
       );
     }
     let label = (
       <div className="vehicle-label">
-           {speed} &nbsp;&nbsp; {ttc} &nbsp;&nbsp; {distance}
+           {passed_in_red}{speed}{ttc}{distance}
       </div>
     );
 
