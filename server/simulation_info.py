@@ -105,8 +105,7 @@ class simulation_info_db(object):
                 sql = "SELECT * FROM `simulation_info`"
                 cursor.execute(sql)
                 result = cursor.fetchall()
-                for simul in result:
-                    simul['vehicle_info'] = ast.literal_eval(simul['vehicle_info'])
+               
 
 
                 

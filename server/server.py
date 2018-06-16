@@ -36,8 +36,8 @@ def addDatasetFile(data):
     return file_content
 
 def deleteJunction(data):
-    db.delete_junction(data['junction_id'])
-    db.delete_junction(data['junction_id'])
+    db.delete_junction_db(data['junction_id'])
+    db.delete_junction_storage(data['junction_id'])
     return True
 
 def createSimulation(data):
@@ -132,7 +132,3 @@ if __name__ == '__main__':
 #                 outfile.write(str(frame))
 #                 outfile.write('\n')
 #             outfile.write(']')
-
-
-
-
