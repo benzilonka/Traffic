@@ -162,9 +162,11 @@ class DB_Layer(object):
         dataset = storage.get_all_dataset_files(junction_id)
         ans = []
         for frames in dataset:
+            
             i = -1
             last = - FRAMES_JUMPS_ON_SEARCH - 2
-            for frame in frames[2]:
+            for frame in frames[2]['frames']:
+                print(frame)
                 i = i + 1
                 for vehicle in frame["objects"]:
                     if min_meta_value <= vehicle[meta_key] <= max_meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
@@ -186,7 +188,7 @@ class DB_Layer(object):
         for frames in deta_set:
             i = -1
             last = - FRAMES_JUMPS_ON_SEARCH - 2
-            for frame in frames[2]:
+            for frame in frames[2]['frames']:
                 i = i + 1
                 for vehicle in frame["objects"]:
                     if vehicle[meta_key] == meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
@@ -203,14 +205,19 @@ class DB_Layer(object):
 
     def search_data_min_max_with_dataset(self, junction_id, dataset_id, meta_key, min_meta_value, max_meta_value):
         
+        
         deta_set = storage.get_dataset_files(junction_id, dataset_id)
+        
+        
         ans = []
         for frames in deta_set:
             i = -1
             last = - FRAMES_JUMPS_ON_SEARCH - 2
-            for frame in frames:
+            for frame in frames['frames']:
+               
                 i = i + 1
                 for vehicle in frame["objects"]:
+                   
                     if min_meta_value <= vehicle[meta_key] <= max_meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
                         res = {
                             'junction_id': junction_id,
@@ -230,9 +237,10 @@ class DB_Layer(object):
         for frames in deta_set:
             i = -1
             last = - FRAMES_JUMPS_ON_SEARCH - 2
-            for frame in frames:
+            for frame in frames['frames']:
                 i = i + 1
                 for vehicle in frame["objects"]:
+                   
                     if vehicle[meta_key] == meta_value and i > last + FRAMES_JUMPS_ON_SEARCH:
                         res = {
                             'junction_id': junction_id,
