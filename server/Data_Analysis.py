@@ -1,7 +1,7 @@
 import json
 import sys
 
-from server import Parser
+import Parser
 
 
 def add_alerts(frame, prev_frame, lane_ratio, direction, ver_or_hor, stop_line, lanes_end, lanes_start, sumo_flag):
@@ -74,7 +74,10 @@ def calc_ttc(vehicle, vehicles, lane_ratio):
     if vehicle['speed'] <= 0 or vehicle['speed'] <= distance_and_speed[1]:
         return -1
     else:
-        ttc = float(distance_and_speed[0] / ((vehicle['speed'] * lane_ratio) - (distance_and_speed[1] * lane_ratio)))
+        if ((vehicle['speed'] * lane_ratio) - (distance_and_speed[1] * lane_ratio)) == 0:
+            ttc =-1
+        else:
+            ttc = float(distance_and_speed[0] / ((vehicle['speed'] * lane_ratio) - (distance_and_speed[1] * lane_ratio)))
     if ttc > Parser.MAX_TTC:
         return -1
     return ttc
