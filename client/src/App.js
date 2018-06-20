@@ -26,7 +26,7 @@ import './styles/App.css';
 
 const FRAME_TIME = 0.066666666666;
 const SECOND = 1000;
-const SERVER_URL = 'http://localhost:8080/';
+const SERVER_URL = 'http://ec2-34-247-89-32.eu-west-1.compute.amazonaws.com:8080/';
 const TABS = {
   main: 0,
   junctions: 1,
@@ -253,27 +253,33 @@ class App extends Component {
       loading: true
     });
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'getJunctions'
-    })
-    .then(function (response) {
-      try {
-        //console.log(response.data);
-        response.data.map(function(junc) {
-          junc.lat = parseFloat(junc.lat);
-          junc.lng = parseFloat(junc.lng);
-          return null;
-        });
-        self.setState({
-          junctions: response.data,
-          loading: false
-        }, function() { callback(response.data); });
-      }
-      catch(e) {
-        console.log(e);
-        callback(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'getJunctions'
+      })
+      .then(function (response) {
+        try {
+          //console.log(response.data);
+          response.data.map(function(junc) {
+            junc.lat = parseFloat(junc.lat);
+            junc.lng = parseFloat(junc.lng);
+            return null;
+          });
+          self.setState({
+            junctions: response.data,
+            loading: false
+          }, function() { callback(response.data); });
+        }
+        catch(e) {
+          console.log(e);
+          callback(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+      callback(e);
+    }
   };
 
   getDatasets = (junction_id, callback) => {
@@ -321,69 +327,79 @@ class App extends Component {
       loading: true
     });
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'getDatasetFiles',
-      dataset_id: dataset_id,
-      junction_id: self.state.selectedJunction ? self.state.selectedJunction.id : 0
-    })
-    .then(function (response) {
-      try {
-        let _frames = [];
-        let i = 0;
-        response.data.map(function(data_for_direction) {                
-          if(data_for_direction.hasOwnProperty('statistics')){
-            self.storeStatistics(data_for_direction.statistics, i);
-            data_for_direction = data_for_direction.frames;
+    try {
+      axios.post(SERVER_URL, {
+        route: 'getDatasetFiles',
+        dataset_id: dataset_id,
+        junction_id: self.state.selectedJunction ? self.state.selectedJunction.id : 0
+      })
+      .then(function (response) {
+        try {
+          let _frames = [];
+          let i = 0;
+          response.data.map(function(data_for_direction) {                
+            if(data_for_direction.hasOwnProperty('statistics')){
+              self.storeStatistics(data_for_direction.statistics, i);
+              data_for_direction = data_for_direction.frames;
+            }
+            _frames[i] = self.parseFrames(data_for_direction, i);
+            i++;
+            return null;
+          });
+          let size = 0;
+          _frames.map(function(frames_for_direction) {
+            //console.log(frames_for_direction);
+            if(frames_for_direction.cars.length > size) {
+              size = frames_for_direction.cars.length;
+            }
+            return null;
+          });
+          let selectedJunction = self.state.selectedJunction;
+          if(selectedJunction == null) {
+            selectedJunction = { id: 0 };
           }
-          _frames[i] = self.parseFrames(data_for_direction, i);
-          i++;
-          return null;
-        });
-        let size = 0;
-        _frames.map(function(frames_for_direction) {
-          //console.log(frames_for_direction);
-          if(frames_for_direction.cars.length > size) {
-            size = frames_for_direction.cars.length;
+          selectedJunction.currentDataset = dataset_id;
+          self.setState({
+            frames: _frames,
+            numOfFrames: size,
+            loading: false,
+            selectedJunction: selectedJunction
+          });
+          self.onEnded();
+          self.goToTab(TABS.main);
+          if(typeof callback === 'function') {
+            callback();
           }
-          return null;
-        });
-        let selectedJunction = self.state.selectedJunction;
-        if(selectedJunction == null) {
-          selectedJunction = { id: 0 };
         }
-        selectedJunction.currentDataset = dataset_id;
-        self.setState({
-          frames: _frames,
-          numOfFrames: size,
-          loading: false,
-          selectedJunction: selectedJunction
-        });
-        self.onEnded();
-        self.goToTab(TABS.main);
-        if(typeof callback === 'function') {
-          callback();
+        catch(e) {
+          console.log(e);
         }
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+      });
+    } 
+    catch(e) {
+      console.log(e);
+    }
   };
 
   addJunction = (junction, callback) => {
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'addJunction',
-      junction: junction
-    })
-    .then(function (response) {        
-      try {
-        self.getJunctions(callback);
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'addJunction',
+        junction: junction
+      })
+      .then(function (response) {        
+        try {
+          self.getJunctions(callback);
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
 
   deleteJunction = (callback) => {
@@ -391,38 +407,48 @@ class App extends Component {
       loading: true
     });
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'deleteJunction',
-      junction_id: self.state.selectedJunction.id
-    })
-    .then(function (response) {        
-      try {
-        self.setState({
-          selectedJunction: null,
-          loading: false
-        }, function() { self.getJunctions(callback); });        
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'deleteJunction',
+        junction_id: self.state.selectedJunction.id
+      })
+      .then(function (response) {        
+        try {
+          self.setState({
+            selectedJunction: null,
+            loading: false
+          }, function() { self.getJunctions(callback); });        
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
 
   addDataset = (dataset, callback) => {
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'addDataset',
-      junction_id: self.state.selectedJunction.id,
-      dataset: dataset
-    })
-    .then(function (response) {      
-      try {
-        self.getDatasets(self.state.selectedJunction.id, callback);
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'addDataset',
+        junction_id: self.state.selectedJunction.id,
+        dataset: dataset
+      })
+      .then(function (response) {      
+        try {
+          self.getDatasets(self.state.selectedJunction.id, callback);
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
 
   createSimulation = simulation => {
@@ -430,41 +456,51 @@ class App extends Component {
       loading: true
     });
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'createSimulation',
-      simulation: simulation,
-      junction_id: 0
-    })
-    .then(function (response) {      
-      try {
-        simulation.id = 0;
-        self.setState({
-          selectedJunction: simulation,
-          loading: false
-        });
-        self.getDatasetFiles(response.data);
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'createSimulation',
+        simulation: simulation,
+        junction_id: 0
+      })
+      .then(function (response) {      
+        try {
+          simulation.id = 0;
+          self.setState({
+            selectedJunction: simulation,
+            loading: false
+          });
+          self.getDatasetFiles(response.data);
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
 
   getSimulations = () => {
     let self = this;
-    axios.post(SERVER_URL, {
-      route: 'getSimulations'
-    })
-    .then(function (response) {      
-      try {
-        self.setState({
-          simulations: response.data
-        });
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, {
+        route: 'getSimulations'
+      })
+      .then(function (response) {      
+        try {
+          self.setState({
+            simulations: response.data
+          });
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
 
   goToTab = tab_index => {
@@ -541,17 +577,22 @@ class App extends Component {
     }
     //console.log(data);
     let self = this;
-    axios.post(SERVER_URL, data)
-    .then(function (response) {
-      try {
-        self.setState({
-          search_results: response.data
-        });
-      }
-      catch(e) {
-        console.log(e);
-      }
-    });
+    try {
+      axios.post(SERVER_URL, data)
+      .then(function (response) {
+        try {
+          self.setState({
+            search_results: response.data
+          });
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+    }
   };
   highlightVehicle = vehicle_id => {
     let v = vehicle_id;

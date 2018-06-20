@@ -12,10 +12,10 @@ class DB_Layer(object):
 
     def backup_database(self):
         
-        DB_HOST = 'localhost'
-        DB_USER = 'project'
+        DB_HOST = 'traffic.c7depggisrds.eu-west-1.rds.amazonaws.com'
+        DB_USER = 'root'
         DB_PASSWD = 'Yrtphe1820-='
-        dbname = 'my_project'
+        dbname = 'traffic'
 
         # Driectory Path
         DIRECTORY_BASE = "C:/shana4/python/backup/"
@@ -32,10 +32,10 @@ class DB_Layer(object):
 
     def create_vidio_info_table (self):
     # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -63,10 +63,10 @@ class DB_Layer(object):
     def create_alert_info_table (self):
                   
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -92,10 +92,10 @@ class DB_Layer(object):
         return
     def add_rows_to_alert_info_info (self,file_name,vidio_id,direction, vidio_info_rows):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -118,10 +118,10 @@ class DB_Layer(object):
         return
     def serch_by_date_alert_info (self,date_from, date_to):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -147,10 +147,10 @@ class DB_Layer(object):
     
     def serch_by_file_name_alert_info (self,file_name):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -173,10 +173,10 @@ class DB_Layer(object):
 
     def serch_all_alert_info (self):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -196,10 +196,10 @@ class DB_Layer(object):
         return result
     def delete_by_date_alert_info (self,date_from, date_to):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -224,10 +224,10 @@ class DB_Layer(object):
         return 
     def create_junctions_table (self):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -253,10 +253,10 @@ class DB_Layer(object):
         return
     def delete_from_all_table (self):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -277,10 +277,10 @@ class DB_Layer(object):
         return
     def add_row_to_junction_info (self,junction):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -309,10 +309,10 @@ class DB_Layer(object):
         return result['MAX(id)']+1
     def serch_by_id_junction_info (self,id):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -334,10 +334,10 @@ class DB_Layer(object):
     
     def serch_all_junction_info (self):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -359,10 +359,10 @@ class DB_Layer(object):
 
     def delete_by_id_from_junction_info (self,id):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -382,10 +382,10 @@ class DB_Layer(object):
         return 
     def add_vidio_num_to_junction (self,id, vidio_id,date_vidio):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -411,10 +411,10 @@ class DB_Layer(object):
 
     def update_junction (self,junction):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -441,10 +441,10 @@ class DB_Layer(object):
     
     def add_rows_to_vidio_info (self,junction_id, vidio_info_rows):
         # Connect to the database    
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
         vidio_id = -1
@@ -479,10 +479,10 @@ class DB_Layer(object):
 
     def serch_by_junction_id (self,id):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 
@@ -504,10 +504,10 @@ class DB_Layer(object):
 
     def delete_by_vidio_num_and_vidio_direction (self, i):
         # Connect to the database
-        connection = pymysql.connect(host='localhost',
-                                    user='project',
+        connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
+                                    user='root',
                                     password='123456',
-                                    db='my_project',
+                                    db='traffic',
                                     charset='utf8mb4',
                                     cursorclass=pymysql.cursors.DictCursor)
 

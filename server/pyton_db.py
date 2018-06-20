@@ -25,7 +25,7 @@ class data_row(object):
         self.counted = counted
 def create_vidio_info_table ():
     # Connect to the database
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
                                  user='project',
                                  password='123456',
                                  db='my_project',
@@ -54,7 +54,7 @@ def create_vidio_info_table ():
     return
 def add_row_to_db (row_of_data):
     # Connect to the database
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
                                  user='project',
                                  password='123456',
                                  db='my_project',
@@ -76,7 +76,7 @@ def add_row_to_db (row_of_data):
     return
 def serch_by_vidio_num_and_vidio_direction (vidio_num, vidio_direction):
     # Connect to the database
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
                                  user='project',
                                  password='123456',
                                  db='my_project',
@@ -99,7 +99,7 @@ def serch_by_vidio_num_and_vidio_direction (vidio_num, vidio_direction):
 
 def delete_by_vidio_num_and_vidio_direction (vidio_num, vidio_direction):
     # Connect to the database
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='traffic.c7depggisrds.eu-west-1.rds.amazonaws.com',
                                  user='project',
                                  password='123456',
                                  db='my_project',

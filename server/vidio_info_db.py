@@ -5,7 +5,7 @@ import pymysql
 
 import os
 
-DB_HOST = 'localhost'
+DB_HOST = 'traffic.c7depggisrds.eu-west-1.rds.amazonaws.com'
 DB_USER = 'root'
 DB_PASSWD = 'Yrtphe1820-='
 DB_NAME = 'traffic'

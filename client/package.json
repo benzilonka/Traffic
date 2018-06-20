@@ -1,7 +1,7 @@
 {
-  "name": "traffic",
-  "version": "0.1.0",
-  "private": true,
+  "name": "traffic_2018_bgu",
+  "version": "1.0.0",
+  "private": false,
   "dependencies": {
     "axios": "^0.17.1",
     "bootstrap": "^4.0.0-beta.2",

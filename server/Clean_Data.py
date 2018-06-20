@@ -2,7 +2,7 @@ import json
 import math
 import numpy as np
 from scipy.signal import savgol_filter
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 def clean(data):
