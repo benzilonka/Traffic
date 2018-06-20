@@ -17,7 +17,7 @@ def fix_file(data, info):
     fixed_frames = []
     # need to fix and get the ratio from the data
     lane_ratio = 5
-    lane_stop = 650
+    lane_stop = 665
     react_lanes = {"right": [0, 11.66], "forward": [11.66, 23.33], "left": [23.33, 35]}
     for frame in jsons:
         if frame:
