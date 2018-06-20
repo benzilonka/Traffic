@@ -148,9 +148,9 @@ class DB_Layer(object):
             return vidio_db.serch_vidio_info_by_id_junction(junction_id)
     def add_dataset(self, junction_id, dataset):
         if junction_id==0:
-            simulation_db.add_simulation_info(dataset)
+            return simulation_db.add_simulation_info(dataset)
         else:
-            vidio_db.add_vidio_info(junction_id, dataset)
+            return vidio_db.add_vidio_info(junction_id, dataset)
     def delete_simulation(self, id):
         simulation_db.delete_simulation_info(id)
     
